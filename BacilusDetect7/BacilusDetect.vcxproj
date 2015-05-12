@@ -1,0 +1,203 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AF6AD23F-E440-4412-8C37-D75D85770B36}</ProjectGuid>
+    <RootNamespace>BacilusDetect</RootNamespace>
+    <Keyword>MFCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\..\libs\VC10_props\OPENCV\OpenCV_DEBUG_32.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files\OpenCV\cvaux\include;C:\Program Files\Microsoft SQL Server\100\SDK\Include;C:\Program Files\OpenCV\cxcore\include;C:\Program Files\OpenCV\otherlibs\highgui;C:\Program Files\OpenCV\bin;C:\Program Files\OpenCV\cv\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\Microsoft SQL Server\100\SDK\Lib\x86;D:\Software\BacilusDetect;C:\Program Files\OpenCV\lib;$(LibraryPath)</LibraryPath>
+    <ReferencePath>D:\Software\BacilusDetect;$(ReferencePath)</ReferencePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files\OpenCV\cvaux\include;C:\Program Files\OpenCV\cxcore\include;C:\Program Files\OpenCV\otherlibs\highgui;C:\Program Files\OpenCV\bin;C:\Program Files\OpenCV\cv\include;C:\Program Files\Microsoft SQL Server\100\SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Software\BacilusDetect;C:\Program Files\OpenCV\lib;C:\Program Files\Microsoft SQL Server\100\SDK\Lib\x86;$(LibraryPath)</LibraryPath>
+    <ReferencePath>D:\Software\BacilusDetect;$(ReferencePath)</ReferencePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>odbc32.lib;sqlncli10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AddModuleNamesToAssembly>
+      </AddModuleNamesToAssembly>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenCV\cxcore\include;C:\Program Files\OpenCV\otherlibs\highgui;C:\Program Files\OpenCV\bin;C:\Program Files\OpenCV\cv\include;$(IncludePath)</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>odbc32.lib;Cxcore.lib;cv.lib;highgui.lib;sqlncli10.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <AddModuleNamesToAssembly>
+      </AddModuleNamesToAssembly>
+      <AdditionalLibraryDirectories>C:\Program Files\OpenCV\lib;C:\Program Files\OpenCV\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\BacilusDetect.ico" />
+    <None Include="res\BacilusDetect.rc2" />
+    <None Include="res\BacilusDetectDoc.ico" />
+    <None Include="res\bitmap1.bmp" />
+    <None Include="res\HalfMicroscopeImage.bmp" />
+    <None Include="res\HalfMicroscopeImage.JPG" />
+    <None Include="res\Horizon.bmp" />
+    <None Include="res\LOGO.bmp" />
+    <None Include="res\MicroscopeImage.bmp" />
+    <None Include="res\Slide.bmp" />
+    <None Include="res\SlideScan.bmp" />
+    <None Include="res\Toolbar.bmp" />
+    <None Include="res\Toolbar256.bmp" />
+    <None Include="res\Vertical.bmp" />
+    <None Include="UserImages.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AutoAdjustLight.h" />
+    <ClInclude Include="AutoFocus.h" />
+    <ClInclude Include="BacilusDetect.h" />
+    <ClInclude Include="BacilusDetectDoc.h" />
+    <ClInclude Include="BacilusDetectView.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="define.h" />
+    <ClInclude Include="GridppReportEventImpl.h" />
+    <ClInclude Include="ImageProcess.h" />
+    <ClInclude Include="JudgeDlg.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="Mechanism.h" />
+    <ClInclude Include="MicrosopeControlDlg.h" />
+    <ClInclude Include="MotorController.h" />
+    <ClInclude Include="MyBitmap.h" />
+    <ClInclude Include="ODBCErrors.h" />
+    <ClInclude Include="ProSingleImage.h" />
+    <ClInclude Include="Report.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="SampleGrabberCBImpl.h" />
+    <ClInclude Include="ScanFashionDlg.h" />
+    <ClInclude Include="SerialPort.h" />
+    <ClInclude Include="SlideInfoDlg.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="toupcam.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AutoAdjustLight.cpp" />
+    <ClCompile Include="AutoFocus.cpp" />
+    <ClCompile Include="BacilusDetect.cpp" />
+    <ClCompile Include="BacilusDetectDoc.cpp" />
+    <ClCompile Include="BacilusDetectView.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ImageProcess.cpp" />
+    <ClCompile Include="JudgeDlg.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="Mechanism.cpp" />
+    <ClCompile Include="MicrosopeControlDlg.cpp" />
+    <ClCompile Include="MotorController.cpp" />
+    <ClCompile Include="MyBitmap.cpp" />
+    <ClCompile Include="ODBCErrors.cpp" />
+    <ClCompile Include="ProSingleImage.cpp" />
+    <ClCompile Include="Report.cpp" />
+    <ClCompile Include="SampleGrabberCBImpl.cpp" />
+    <ClCompile Include="ScanFashionDlg.cpp" />
+    <ClCompile Include="SerialPort.cpp" />
+    <ClCompile Include="SlideInfoDlg.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="BacilusDetect.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="BacilusDetect.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
