@@ -19,7 +19,7 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-const double AREATHR =60;
+const double AREATHR = 35;
 
 
 
@@ -28,7 +28,7 @@ CProSingleImage::CProSingleImage(cv::Mat &img)
 	//assert(img !=NULL || img.channels()== 3 );
 
 	 
-	std::vector<cv::Mat> channels; //½¨Á¢Ò»¸övector±äÁ¿ channels
+	std::vector<cv::Mat> channels; //å»ºç«‹ä¸€ä¸ªvectorå˜é‡ channels
 	
 	m_ImgSize = cv::Size(800,600); 
 	m_pSrcImg.create(m_ImgSize.height,m_ImgSize.width,CV_8UC3);
@@ -40,26 +40,27 @@ CProSingleImage::CProSingleImage(cv::Mat &img)
 	m_pValueImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
 
 	cv::Mat tmpimg(m_ImgSize,CV_8UC3);
-	cv::cvtColor(m_pSrcImg, tmpimg, CV_BGR2HSV); //½«Ô­Ê¼µÄBGRÍ¼Ïñ±ä»»ÎªHSVÍ¼Ïñ
-	cv::split(tmpimg, channels); //½«tmpingÀïHSVÈıÍ¨µÀµÄÖµ·Ö¿ª±£´æÔÚchannelsÖĞ
+	cv::cvtColor(m_pSrcImg, tmpimg, CV_BGR2HSV, 3); //å°†åŸå§‹çš„BGRå›¾åƒå˜æ¢ä¸ºHSVå›¾åƒ
+	cv::split(tmpimg, channels); //å°†tmpingé‡ŒHSVä¸‰é€šé“çš„å€¼åˆ†å¼€ä¿å­˜åœ¨channelsä¸­
 	m_pHueImg = channels[0];
 	m_pSaturationImg = channels[1];
-	m_pValueImg = channels[2]; //½«channelsÀïµÄÈı¸öÖµ·Ö±ğ¸³Óè¡°H¡¢S¡¢V¡±
+	m_pValueImg = channels[2]; //å°†channelsé‡Œçš„ä¸‰ä¸ªå€¼åˆ†åˆ«èµ‹äºˆâ€œHã€Sã€Vâ€
 
 	//cv::ReleaseImage(&tmpimg);
 	
-	m_pGrayImg.zeros(m_ImgSize,CV_8U);
-	cv::cvtColor(m_pSrcImg, m_pGrayImg, CV_BGR2GRAY); //½«Ô­Ê¼Í¼Æ¬±ä³É»Ò¶ÈÍ¼£¨Ô­Ê¼Í¼Æ¬ÒÀÈ»´æÔÚ£©
+	m_pGrayImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U); 
+	m_pGrayImg.setTo(0);
+	cv::cvtColor(m_pSrcImg, m_pGrayImg, CV_BGR2GRAY); //å°†åŸå§‹å›¾ç‰‡å˜æˆç°åº¦å›¾ï¼ˆåŸå§‹å›¾ç‰‡ä¾ç„¶å­˜åœ¨ï¼‰
 	m_pCoarseSegImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
     m_pPostSegImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
-	m_pClassifiedSrcImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
-	m_pClassifiedBin3CImg.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
-	m_pCoarseSegImg.zeros(m_ImgSize,CV_8U);
-	m_pPostSegImg.zeros(m_ImgSize,CV_8U);
-	m_pClassifiedSrcImg.zeros(m_ImgSize,CV_8U);
-	m_pClassifiedBin3CImg.zeros(m_ImgSize,CV_8U); //³õÊ¼»¯ËÄ¸öÍ¼ÏñÊı¾İ
+	m_pClassifiedSrcImg.create(m_ImgSize.height,m_ImgSize.width,CV_8UC3);
+	m_pClassifiedBin3CImg.create(m_ImgSize.height,m_ImgSize.width,CV_8UC3);
+	m_pCoarseSegImg.setTo(0);
+	m_pPostSegImg.setTo(0);
+	m_pClassifiedSrcImg.setTo(cv::Scalar(0,0,0));
+	m_pClassifiedBin3CImg.setTo(cv::Scalar(0,0,0)); //åˆå§‹åŒ–å››ä¸ªå›¾åƒæ•°æ®
 
-	//¾µÍ·ÔÓÖÊÔëÉùÑÚÄ¤Í¼Ïñ
+	//é•œå¤´æ‚è´¨å™ªå£°æ©è†œå›¾åƒ
 	m_pLensNoiseMaskImg.create(m_ImgSize,CV_8U);
 	m_pLensNoiseMaskImg.zeros(m_ImgSize,CV_8U);
 
@@ -149,7 +150,7 @@ CProSingleImage::~CProSingleImage()
 void CProSingleImage::ClassifyObject()
 {
 /********************************************************************************/
-//µÚÒ»²½£ºÊ×ÏÈ»ñÈ¡Ã¿¸öÁ¬Í¨¿éµÄÃæ»ı¡¢³¤¿í±È¡¢Ô²ĞÎ¶È¡¢´Ö²Ú¶ÈµÈ²ÎÊı
+//ç¬¬ä¸€æ­¥ï¼šé¦–å…ˆè·å–æ¯ä¸ªè¿é€šå—çš„é¢ç§¯ã€é•¿å®½æ¯”ã€åœ†å½¢åº¦ã€ç²—ç³™åº¦ç­‰å‚æ•°
 /********************************************************************************/
 //	int NumBlobs = m_blobResult.GetNumBlobs();
 ////	if(NumBlobs == 0)
@@ -172,20 +173,20 @@ void CProSingleImage::ClassifyObject()
 //	{
 //		CBlob Blob = m_blobResult.GetBlob(i);
 //
-//		//Ãæ»ı
+//		//é¢ç§¯
 //		areas[i] = Blob.Area();
 //
-//		//³¤¿í±È
+//		//é•¿å®½æ¯”
 //		CvBox2D box = Blob.GetMinAreaRect();
 //		double height = box.size.height;
 //		double width = box.size.width;
 //		whratios[i] = (height > width)? height/width : width/height;
 //		
-//		//Ô²ĞÎ¶È
+//		//åœ†å½¢åº¦
 //		CBlobGetCompactness getCompactness = CBlobGetCompactness();
 //		circs[i] = getCompactness(Blob);
 //
-//		//´Ö²Ú¶È
+//		//ç²—ç³™åº¦
 //		CBlobGetRoughness getRoughness = CBlobGetRoughness();
 //		roughs[i] = getRoughness(Blob);
 //	}
@@ -204,36 +205,35 @@ void CProSingleImage::ClassifyObject()
 
 	for (int i = 0; i < contour.size(); i++)  
     {  
-        //µÃµ½Ã¿¸öÂÖÀªµÄÃæ»ı
-		areas[i]= fabs(cv::contourArea(contour[i]));  
+        //å¾—åˆ°æ¯ä¸ªè½®å»“çš„é¢ç§¯
+		areas[i]= cv::contourArea(contour[i]);  
 		
-		//¼ÆËãÂÖÀªµÄ³¤¿í±È  
-		cv::Rect aRect = cv::boundingRect(contour[i]); 
-		whratios[i] = (aRect.height > aRect.width)? (float)(aRect.height/aRect.width): (float)(aRect.width/aRect.height);
+		//è®¡ç®—è½®å»“çš„é•¿å®½æ¯”  
+		cv::RotatedRect aRect = cv::minAreaRect(contour[i]);
+		whratios[i] = (aRect.size.height > aRect.size.width)? (float)(aRect.size.height/aRect.size.width) : (float)(aRect.size.width/aRect.size.height);
 		//if((aRect.width/aRect.height)>1) whratios[i] = (float)aRect.width/(float)aRect.height;
 		//else whratios[i] = (float)aRect.height/(float)aRect.width;
 
-		//¼ÆËãÔ²ĞÎ¶È
+		//è®¡ç®—åœ†å½¢åº¦
 		double contLenth = cv::arcLength(contour[i],true );
 		circs[i] = (4 * 3.14159265358979323846 * areas[i]) / pow(contLenth,2); 
 		
-        //¼ÆËã´Ö²Ú¶È
+        //è®¡ç®—ç²—ç³™åº¦
 		std::vector<cv::Point> hull;
-		cv::convexHull(contour[i],hull, true);
-		double hullPerimeter = fabs(cv::arcLength(hull,true));
-		roughs[i] = (float)(contLenth / hullPerimeter);
-
+		cv::convexHull(cv::Mat(contour[i]),hull);
+		double hullPerimeter = cv::arcLength(hull,true);
+		roughs[i] = contLenth / hullPerimeter;
 	}
 
 /********************************************************************************/
-//µÚ¶ş²½£ºÄ¿±ê·ÖÀà
+//ç¬¬äºŒæ­¥ï¼šç›®æ ‡åˆ†ç±»
 /********************************************************************************/
 	//int * objclass  = new int[NumBlobs];
 	//memset(objclass,0,sizeof(int)*NumBlobs);
 	int * objclass  = new int[contour.size()];
 	memset(objclass,0,sizeof(int)*contour.size());
 		
-	for(int i=0; i < contour.size(); i++)
+		for(int i=0; i < contour.size(); i++)
 	{
 		if(whratios[i] < 10)
 		{
@@ -243,17 +243,17 @@ void CProSingleImage::ClassifyObject()
 				{
 					if(areas[i] > 150)
 					{
-						objclass[i]=2; //µÚ2ÀàÄ¿±ê
+						objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 						m_nNumTB2++;
 					}
 					else
 					{
-						objclass[i]=3; //µÚ3ÀàÄ¿±ê
+						objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 					}
 				}
 				else
 				{
-					objclass[i]=1; //µÚ1ÀàÄ¿±ê
+					objclass[i]=1; //ç¬¬1ç±»ç›®æ ‡
 					m_nNumTB1++;
 				}
 			}
@@ -263,7 +263,7 @@ void CProSingleImage::ClassifyObject()
 				{
 					if(areas[i]>=367.5)
 					{
-						objclass[i]=3; //µÚ3ÀàÄ¿±ê
+						objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 					}
 					else
 					{
@@ -271,25 +271,25 @@ void CProSingleImage::ClassifyObject()
 						{
 							if(roughs[i] < 1.1752)
 							{
-								objclass[i]=1; //µÚ1ÀàÄ¿±ê
+								objclass[i]=1; //ç¬¬1ç±»ç›®æ ‡
 								m_nNumTB1++;
 							}
 							else
 							{
-								objclass[i]=3; //µÚ3ÀàÄ¿±ê
+								objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 							}
 						}
 						else
 						{
 							if(circs[i] >=0.299157)
 							{
-								objclass[i]=3; //µÚ3ÀàÄ¿±ê
+								objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 							}
 							else
 							{
 								if(areas[i] > 150)
 								{
-									objclass[i]=2; //µÚ2ÀàÄ¿±ê
+									objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 									m_nNumTB2++;
 								}
 
@@ -303,11 +303,11 @@ void CProSingleImage::ClassifyObject()
 					{
 						if(circs[i] >=0.127547)
 						{
-							objclass[i]=3; //µÚ3ÀàÄ¿±ê
+							objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 						}
 						else
 						{
-							objclass[i]=2; //µÚ2ÀàÄ¿±ê
+							objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 							m_nNumTB2++;
 						}
 					}
@@ -315,7 +315,7 @@ void CProSingleImage::ClassifyObject()
 					{
 						if(areas[i] > 150)
 						{
-							objclass[i]=2; //µÚ2ÀàÄ¿±ê
+							objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 							m_nNumTB2++;
 						}
 					}
@@ -326,7 +326,7 @@ void CProSingleImage::ClassifyObject()
 	}
 
 /*******************************************************************************/
-//µÚÈı²½£º±êÊ¶Ä¿±ê
+//ç¬¬ä¸‰æ­¥ï¼šæ ‡è¯†ç›®æ ‡
 /********************************************************************************/
 	std::vector<cv::Mat> PostSeg_channels;
 	
@@ -357,6 +357,7 @@ void CProSingleImage::ClassifyObject()
 	cv::merge(PostSeg_channels, m_pClassifiedBin3CImg);
 	m_pSrcImg.copyTo(m_pClassifiedSrcImg);
 	
+
 	for (int i=0; i < contour.size(); i++)
 	{
 		/*CBlob Blob = m_blobResult.GetBlob(i);
@@ -371,13 +372,18 @@ void CProSingleImage::ClassifyObject()
 		rect.height= iMaxy-rect.y;*/
 
 		cv::Rect aRect = cv::boundingRect(contour[i]); 
+		cv::Point2f pt1;
+		cv::Point2f pt2;
+	    pt1 = cv::Point2f(aRect.x,aRect.y); 
+	    pt2 = cv::Point2f(aRect.x + aRect.width,aRect.y + aRect.height); //pt2æ˜¯pt1å¯¹è§’çº¿ä¸Šçš„é¡¶ç‚¹
+	
 		if(objclass[i] == 1)
 		{
 			m_rectTB1[m] = aRect;
 			m++;
  	      
-			cv::rectangle( m_pClassifiedSrcImg,aRect.tl(), aRect.br(), cvScalar(0,255,0),1, 8, 0 );
-			cv::rectangle( m_pClassifiedBin3CImg,aRect.tl(), aRect.br(), cvScalar(0,255,0),1, 8, 0 );
+			cv::rectangle( m_pClassifiedSrcImg,pt1, pt2, cv::Scalar(0,0,255),1, 8, 0 );
+			cv::rectangle( m_pClassifiedBin3CImg,pt1, pt2, cv::Scalar(0,0,255),1, 8, 0 );
 			/*cv::rectangle( m_pClassifiedSrcImg, cv::Point(Blob.MinX()-2,Blob.MinY()-2), cv::Point (Blob.MaxX()+2,Blob.MaxY()+2),CV_RGB(255, 0,0), 2, 8, 0);
 			cv::rectangle( m_pClassifiedBin3CImg, cv::Point(Blob.MinX()-2,Blob.MinY()-2), cv::Point (Blob.MaxX()+2,Blob.MaxY()+2),CV_RGB(255,0,0), 2, 8, 0);*/
 		}
@@ -386,29 +392,30 @@ void CProSingleImage::ClassifyObject()
 			m_rectTB2[n] = aRect;
 			n++;
 
-			cv::rectangle( m_pClassifiedSrcImg,aRect.tl(), aRect.br(), cvScalar(0,255,0),1, 8, 0 );
-			cv::rectangle( m_pClassifiedBin3CImg,aRect.tl(), aRect.br(), cvScalar(0,255,0),1, 8, 0 );
+			cv::rectangle( m_pClassifiedSrcImg,pt1, pt2, cv::Scalar(0,255,0),1, 8, 0 );
+			cv::rectangle( m_pClassifiedBin3CImg,pt1, pt2, cv::Scalar(0,255,0),1, 8, 0 );
 			/*cv::rectangle( m_pClassifiedSrcImg, cv::Point2f(Blob.MinX()-2,Blob.MinY()-2), cv::Point2f(Blob.MaxX()+2,Blob.MaxY()+2),CV_RGB(0, 255,0), 2, 8, 0);
 			cv::rectangle( m_pClassifiedBin3CImg, cv::Point2f(Blob.MinX()-2,Blob.MinY()-2), cv::Point2f(Blob.MaxX()+2,Blob.MaxY()+2),CV_RGB(0,255,0), 2, 8, 0);*/
 		}
 		else
 		{
 	//		cvRectangle( m_pClassifiedSrcImg, cvPoint(Blob.MinX()-2,Blob.MinY()-2), cvPoint (Blob.MaxX()+2,Blob.MaxY()+2),CV_RGB(0,0,255), 2, 8, 0);
-			cv::rectangle( m_pClassifiedBin3CImg,aRect.tl(), aRect.br(), cvScalar(0,255,0),1, 8, 0 );
+			/*cv::rectangle( m_pClassifiedSrcImg,pt1, pt2, cv::Scalar(255,0,0),1, 8, 0 );*/
+			cv::rectangle( m_pClassifiedBin3CImg,pt1, pt2, cv::Scalar(255,0,0),1, 8, 0 );
 		}
 		
 	}
 
-// 	cv::namedWindow("result_1");
-// 	cv::imshow("restult_1", m_pClassifiedSrcImg);
-// 	cv::namedWindow("result_2");
-// 	cv::imshow("restult_2", m_pClassifiedBin3CImg);
-// 	
-// 	
-// 	cv::waitKey(0);
-//  
+	cv::namedWindow("result_1",CV_WINDOW_AUTOSIZE);
+	cv::imshow("restult_1", m_pClassifiedSrcImg);
+	cv::namedWindow("result_2",CV_WINDOW_AUTOSIZE);
+	cv::imshow("restult_2", m_pClassifiedBin3CImg);
+	
+	
+	cv::waitKey(0);
+ 
 /*******************************************************************************/
-//µÚËÄ²½£ºÊÍ·ÅÄÚ´æ
+//ç¬¬å››æ­¥ï¼šé‡Šæ”¾å†…å­˜
 /********************************************************************************/
 	delete [] areas;
 	delete [] whratios ;
@@ -420,7 +427,7 @@ void CProSingleImage::ClassifyObject()
 //void CProSingleImage::ClassifyObject()
 //{
 ///********************************************************************************/
-//µÚÒ»²½£ºÊ×ÏÈ»ñÈ¡Ã¿¸öÁ¬Í¨¿éµÄÃæ»ı¡¢³¤¿í±È¡¢Ô²ĞÎ¶È¡¢´Ö²Ú¶ÈµÈ²ÎÊı
+//ç¬¬ä¸€æ­¥ï¼šé¦–å…ˆè·å–æ¯ä¸ªè¿é€šå—çš„é¢ç§¯ã€é•¿å®½æ¯”ã€åœ†å½¢åº¦ã€ç²—ç³™åº¦ç­‰å‚æ•°
 ///********************************************************************************/
 //	int NumBlobs = m_blobResult.GetNumBlobs();
 //	if(NumBlobs == 0)
@@ -443,26 +450,26 @@ void CProSingleImage::ClassifyObject()
 //	{
 //		CBlob Blob = m_blobResult.GetBlob(i);
 //
-//		//Ãæ»ı
+//		//é¢ç§¯
 //		areas[i] = Blob.Area();
 //
-//		//³¤¿í±È
+//		//é•¿å®½æ¯”
 //		CvBox2D box = Blob.GetMinAreaRect();
 //		double height = box.size.height;
 //		double width = box.size.width;
 //		whratios[i] = (height > width)? height/width : width/height;
 //		
-//		//Ô²ĞÎ¶È
+//		//åœ†å½¢åº¦
 //		CBlobGetCompactness getCompactness = CBlobGetCompactness();
 //		circs[i] = getCompactness(Blob);
 //
-//		//´Ö²Ú¶È
+//		//ç²—ç³™åº¦
 //		CBlobGetRoughness getRoughness = CBlobGetRoughness();
 //		roughs[i] = getRoughness(Blob);
 //	}
 //
 ///********************************************************************************/
-//µÚ¶ş²½£ºÄ¿±ê·ÖÀà
+//ç¬¬äºŒæ­¥ï¼šç›®æ ‡åˆ†ç±»
 ///********************************************************************************/
 //	int * objclass  = new int[NumBlobs];
 //	memset(objclass,0,sizeof(int)*NumBlobs);
@@ -475,21 +482,21 @@ void CProSingleImage::ClassifyObject()
 //		{
 //			if(roughs[i] >=1.1652)
 //			{
-//				//objclass[i]=2; //µÚ2ÀàÄ¿±ê
+//				//objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 //				//m_nNumTB2++;
 //				if(areas[i] > 167.5)
 //				{
-//					objclass[i]=2; //µÚ2ÀàÄ¿±ê
+//					objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 //					m_nNumTB2++;
 //				}
 //				else
 //				{
-//					objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//					objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //				}
 //			}
 //			else
 //			{
-//				objclass[i]=1; //µÚ1ÀàÄ¿±ê
+//				objclass[i]=1; //ç¬¬1ç±»ç›®æ ‡
 //				m_nNumTB1++;
 //			}
 //		}
@@ -497,31 +504,31 @@ void CProSingleImage::ClassifyObject()
 //		{
 //			if(circs[i] >=0.204286)
 //			{
-//				objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//				objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //
 //				//if(areas[i]>=367.5)
 //				//{
-//				//	objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//				//	objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //				//}
 //				//else
 //				//{
 //				//	if(whratios[i] >=2.3)
 //				//	{
-//				//		objclass[i]=2; //µÚ1ÀàÄ¿±ê
+//				//		objclass[i]=2; //ç¬¬1ç±»ç›®æ ‡
 //				//		m_nNumTB1++;
 //				//	}
 //				//	else
 //				//	{
 //				//		//if(circs[i] >=0.299157)
 //				//		//{
-//				//		//	objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//				//		//	objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //				//		//}
 //				//		//else
 //				//		//{
-//				//		//	objclass[i]=2; //µÚ2ÀàÄ¿±ê
+//				//		//	objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 //				//		//	m_nNumTB2++;
 //				//		//}
-//				//		objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//				//		objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //				//	}
 //				//}
 //			}
@@ -531,27 +538,27 @@ void CProSingleImage::ClassifyObject()
 //				{
 //					if(circs[i] >=0.127547)
 //					{
-//						objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//						objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //					}
 //					else
 //					{
-//						objclass[i]=2; //µÚ2ÀàÄ¿±ê
+//						objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 //						m_nNumTB2++;
 //					}
 //				}
 //				else if(areas[i] >= 367.5)
 //				{
-//					objclass[i]=2; //µÚ2ÀàÄ¿±ê
+//					objclass[i]=2; //ç¬¬2ç±»ç›®æ ‡
 //					m_nNumTB2++;
 //				}
-//				//objclass[i]=3; //µÚ3ÀàÄ¿±ê
+//				//objclass[i]=3; //ç¬¬3ç±»ç›®æ ‡
 //			}
 //		}
 //
 //	}
 //
 ///*******************************************************************************/
-//µÚÈı²½£º±êÊ¶Ä¿±ê
+//ç¬¬ä¸‰æ­¥ï¼šæ ‡è¯†ç›®æ ‡
 ///********************************************************************************/
 //	if(m_rectTB1 != NULL)
 //	{
@@ -609,7 +616,7 @@ void CProSingleImage::ClassifyObject()
 //	}
 //
 ///*******************************************************************************/
-//µÚËÄ²½£ºÊÍ·ÅÄÚ´æ
+//ç¬¬å››æ­¥ï¼šé‡Šæ”¾å†…å­˜
 ///********************************************************************************/
 //	delete [] areas;
 //	delete [] whratios ;
@@ -664,8 +671,6 @@ double CProSingleImage::CalcRedEdgeVar(cv::Mat &mask)
 
 	return var;
 }
-
-
 
 
 
@@ -729,18 +734,18 @@ UINT CProSingleImage::GetTB2Num()
 	return m_nNumTB2;
 }
 
-// //²ÉÓÃ¹Ì¶¨ãĞÖµ·¨½øĞĞÍ¼Ïñ·Ö¸î
+// //é‡‡ç”¨å›ºå®šé˜ˆå€¼æ³•è¿›è¡Œå›¾åƒåˆ†å‰²
 void CProSingleImage::SegmentColorImageHSVFixedAndGrayAdapt(double huethr, double satthr, double satthr2,double valthr, int templateSize)
 {
 	cv::Mat tmpimg1;
 	tmpimg1.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
 	cv::Mat tmpimg2; 
 	tmpimg2.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
-	tmpimg1.zeros(m_ImgSize,CV_8U);
-	tmpimg2.zeros(m_ImgSize,CV_8U);
+	tmpimg1.setTo(0);
+	tmpimg2.setTo(0);
 
 	/********************************************************************************/
-	//µÚÒ»²½£ºÔÚHSVÑÕÉ«¿Õ¼ä²ÉÓÃ¹Ì¶¨ãĞÖµ·¨½øĞĞÍ¼Ïñ³õÊ¼·Ö¸î
+	//ç¬¬ä¸€æ­¥ï¼šåœ¨HSVé¢œè‰²ç©ºé—´é‡‡ç”¨å›ºå®šé˜ˆå€¼æ³•è¿›è¡Œå›¾åƒåˆå§‹åˆ†å‰²
 	/********************************************************************************/
 	cv::threshold(m_pHueImg,tmpimg1,huethr,255,CV_THRESH_BINARY);
 	cv::threshold(m_pSaturationImg,tmpimg2,satthr,255,CV_THRESH_BINARY);
@@ -750,37 +755,45 @@ void CProSingleImage::SegmentColorImageHSVFixedAndGrayAdapt(double huethr, doubl
 	cv::threshold(m_pValueImg,tmpimg2,valthr,255,CV_THRESH_BINARY);
 	cv::bitwise_and(tmpimg1,tmpimg2,tmpimg1);
 
-	
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3));
 	cv::dilate(tmpimg1,tmpimg1,element);
     //cvDilate(tmpimg1,tmpimg1);
 	cv::erode(tmpimg1,tmpimg1,element);
 //	cvErode(tmpimg1,tmpimg1);
+	cv::namedWindow("ä¸‰é€šé“ç›¸äº¤",CV_WINDOW_AUTOSIZE);
+	cv::imshow("ä¸‰é€šé“ç›¸äº¤", tmpimg1);
+
 
 	/********************************************************************************/
-	//µÚ¶ş²½£º½øĞĞ×ÔÊÊÓ¦ãĞÖµ·Ö¸î
+	//ç¬¬äºŒæ­¥ï¼šè¿›è¡Œè‡ªé€‚åº”é˜ˆå€¼åˆ†å‰²
 	/********************************************************************************/
 	cv::adaptiveThreshold(m_pGrayImg,tmpimg2,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV ,templateSize,5);
-	medianBlur(tmpimg2,tmpimg2,3); // ÖĞÖµÂË²¨
-	
-	/********************************************************************************/
-	//µÚÈı²½£ºÁ½´Î·Ö¸î½á¹û½øĞĞ¡°Óë¡±²Ù×÷
-	/********************************************************************************/
-	cv::bitwise_and(tmpimg1,tmpimg2,m_pCoarseSegImg);//´Ö·Ö¸î½á¹û´æ·ÅÔÚm_pCoarseSegImg
+	medianBlur(tmpimg2,tmpimg2,3); // ä¸­å€¼æ»¤æ³¢
+	cv::namedWindow("é«˜æ–¯åŠ æƒè‡ªé€‚åº”",CV_WINDOW_AUTOSIZE);
+	cv::imshow("é«˜æ–¯åŠ æƒè‡ªé€‚åº”", tmpimg2);
+
 
 	/********************************************************************************/
-	//µÚËÄ²½£ºÌŞ³ı¾µÍ·ÔÓÖÊ
+	//ç¬¬ä¸‰æ­¥ï¼šä¸¤æ¬¡åˆ†å‰²ç»“æœè¿›è¡Œâ€œä¸â€æ“ä½œ
 	/********************************************************************************/
-	EliminateLensNoise();
+	cv::bitwise_and(tmpimg1,tmpimg2,m_pCoarseSegImg);//ç²—åˆ†å‰²ç»“æœå­˜æ”¾åœ¨m_pCoarseSegImg
+
+	cv::namedWindow("åˆå§‹ç²—åˆ†å‰²ç»“æœ",CV_WINDOW_AUTOSIZE);
+	cv::imshow("åˆå§‹ç²—åˆ†å‰²ç»“æœ", m_pCoarseSegImg);
 
 	/********************************************************************************/
-	//µÚÎå²½£ºÊÍ·ÅÄÚ´æ
+	//ç¬¬å››æ­¥ï¼šå‰”é™¤é•œå¤´æ‚è´¨
+	/********************************************************************************/
+	/*EliminateLensNoise();*/
+
+	/********************************************************************************/
+	//ç¬¬äº”æ­¥ï¼šé‡Šæ”¾å†…å­˜
 	/********************************************************************************/
 	//cv::ReleaseImage(&tmpimg1);
 	//cv::ReleaseImage(&tmpimg2);
 }
 
-//¼ÆËãÊäÈëÍ¼Ïñ£¨±ØĞëÊÇµ¥Í¨µÀÍ¼Ïñ£©µÄÏñËØ¾ùÖµ£¬Èç¹ûmask²»ÎªNULL,Ôò¼ÆËã½ö½ömask¸²¸ÇÇøÓò
+//è®¡ç®—è¾“å…¥å›¾åƒï¼ˆå¿…é¡»æ˜¯å•é€šé“å›¾åƒï¼‰çš„åƒç´ å‡å€¼ï¼Œå¦‚æœmaskä¸ä¸ºNULL,åˆ™è®¡ç®—ä»…ä»…maskè¦†ç›–åŒºåŸŸ
 double CProSingleImage::CalcMaskedMean(cv::Mat &srcimg, cv::Mat &mask)
 {
 	if(srcimg.data == NULL || srcimg.channels() != 1)
@@ -833,19 +846,23 @@ double CProSingleImage::CalcMaskedMean(cv::Mat &srcimg, cv::Mat &mask)
 void CProSingleImage::SegmentColorImageMixture4(double huethr, double satthr, double satthr2,double valthr)
 {
 	int i;
+	double tmparea;//contouré¢ç§¯ 
 
-   //¹éÒ»»¯Ãæ»ı²ÎÊı£¬ÒÔ800*600Îª»ù×¼£¬¸ÃÃæ»ı²ÎÊıÓÃÀ´¹ıÂËĞ¡µÄÔÓÖÊ
+   //å½’ä¸€åŒ–é¢ç§¯å‚æ•°ï¼Œä»¥800*600ä¸ºåŸºå‡†ï¼Œè¯¥é¢ç§¯å‚æ•°ç”¨æ¥è¿‡æ»¤å°çš„æ‚è´¨
 	double areathr = AREATHR*(m_ImgSize.width * m_ImgSize.height) /(800*600);
 
 	//*************************************************************************/
-	//µÚÒ»²½£º ²ÉÓÃ¹Ì¶¨ãĞÖµ½øĞĞ·Ö¸î£¬·Ö¸î½á¹ûÎªm_pCoarseSegImg
+	//ç¬¬ä¸€æ­¥ï¼š é‡‡ç”¨å›ºå®šé˜ˆå€¼è¿›è¡Œåˆ†å‰²ï¼Œåˆ†å‰²ç»“æœä¸ºm_pCoarseSegImg
 	//************************************************************************/
-	m_pCoarseSegImg.zeros(m_ImgSize,CV_8U);
+	m_pCoarseSegImg.setTo(0);
 	//cvZero(m_pCoarseSegImg);
-	SegmentColorImageHSVFixedAndGrayAdapt(huethr,satthr,satthr2,valthr,27);//´Ö·Ö¸î
+	SegmentColorImageHSVFixedAndGrayAdapt(huethr,satthr,satthr2,valthr,27);//ç²—åˆ†å‰²
+
+	/*cv::namedWindow("contour");
+	cv::imshow("contour",m_pCoarseSegImg);*/
 
 	//*************************************************************************/
-	//µÚ¶ş²½£º ½«·Ö¸î½á¹ûÌí¼Óµ½m_blobResultÖĞ
+	//ç¬¬äºŒæ­¥ï¼š å°†åˆ†å‰²ç»“æœæ·»åŠ åˆ°m_blobResultä¸­
 	//************************************************************************/
 	//cv::rectangle(m_pCoarseSegImg, cv::Point(0,0), cv::Point(m_pCoarseSegImg.cols-1, m_pCoarseSegImg.rows-1), cv::Scalar(0), 1);
 	/*CBlobResult BlobResult(m_pCoarseSegImg, NULL, 0,false);
@@ -862,25 +879,12 @@ void CProSingleImage::SegmentColorImageMixture4(double huethr, double satthr, do
 	}	*/	
 
 
-	//CvMemStorage* storage = cvCreateMemStorage(0);
-	//CvSeq* contour=0;
-	cv::Mat src;
-	m_pCoarseSegImg.copyTo(src); //½«·Ö¸î½á¹ûm_pCoarseSegImg·Åµ½srcÖĞ
-	
-	/*cv::Mat dst;*/ //destination image
-	//dst.create(m_ImgSize.height,m_ImgSize.width,CV_8U);
-	//std::vector<cv::Point> contour; 
-	std::vector<cv::Vec4i> hierarchy; 
-	//cv::Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));//Ëæ»úÉú³ÉÑÕÉ«
-	//cv::Mat dst2;
 	
 	//cvFindContours(src,storage,&contour,sizeof(CvContour),CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE);
-	cv::findContours(src,contour,hierarchy,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_SIMPLE);
+	cv::findContours(m_pCoarseSegImg,contour,CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE);
 	
-	//cvZero(dst);
-	//dst.zeros(m_ImgSize,CV_8U);
 
-	//»­ËùÓĞÂÖÀª(Ìî³ä)
+	//ç”»æ‰€æœ‰è½®å»“(å¡«å……)
 	//cvDrawContours(dst,contour,CV_RGB(255,255,255),CV_RGB(0,255,0),2,CV_FILLED,8,cvPoint(0,0));
 	/*cv::drawContours(dst,contour,idx,cv::Scalar(255),1,8,hierarchy,2);*/
 	
@@ -890,16 +894,23 @@ void CProSingleImage::SegmentColorImageMixture4(double huethr, double satthr, do
 	for (int i = 0; i<contour.size(); i++)  
     {  
   
-        double tmparea = fabs(contourArea(contour[i])); 
+        tmparea = cv::contourArea(contour[i]); 
 
-		if(tmparea < areathr) contour.erase(contour.begin() + i); 
-
-	}
-
-	//cv::drawContours(m_pPostSegImg,contour,-1,cv::Scalar(255),CV_FILLED,8);
-	cv::drawContours(m_pPostSegImg,contour,-1,cv::Scalar(255),2);
-	                         
+		if(tmparea < areathr) 
+		{
+			contour.erase(contour.begin() + i);
+	        i--;  
+		}
+	 }
+    
+	cv::drawContours(m_pPostSegImg,contour,-1,cv::Scalar(255),CV_FILLED,8);
+	
+	cv::namedWindow("åå¤„ç†åˆ†å‰²ç»“æœ",CV_WINDOW_AUTOSIZE);
+	cv::imshow("åå¤„ç†åˆ†å‰²ç»“æœ",m_pPostSegImg);
+		       
 }
+
+
 void CProSingleImage::SetLensNoiseMaskImg(cv::Mat &maskimg)
 {
 //	assert(maskimg !=NULL);
@@ -908,6 +919,7 @@ void CProSingleImage::SetLensNoiseMaskImg(cv::Mat &maskimg)
 		cv::resize(maskimg,m_pLensNoiseMaskImg,m_ImgSize);  
 	}
 }
+
 
 void CProSingleImage::EliminateLensNoise(void)
 {
@@ -925,6 +937,9 @@ cv::Mat CProSingleImage::MakeLensNoiseMaskImage(cv::Mat &grayimg)
 	maskimg.create(grayimg.rows, grayimg.cols, CV_8U);
 	maskimg.zeros(grayimg.rows, grayimg.cols,CV_8U);
 	//cvAdaptiveThreshold(grayimg,maskimg,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV ,31,5);
-	cv::adaptiveThreshold(grayimg,maskimg,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV,31,5);
+	cv::adaptiveThreshold(grayimg,maskimg,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV,31,15);
+	
+	/*cv::namedWindow("maskimg");
+	cv::imshow("maskimg",maskimg);*/
 	return maskimg;
 }
