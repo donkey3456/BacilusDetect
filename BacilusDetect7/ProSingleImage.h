@@ -19,46 +19,46 @@ public:
 	virtual ~CProSingleImage();
 
 private:
-	cv::Size 	m_ImgSize;              //Í¼Ïñ´óĞ¡
-	//CBlobResult m_blobResult;       //µ±Ç°Í¼Ïñblob·ÖÎö½á¹û
-	double m_maxHue;				//µ±Ç°Í¼Ïñ¿éÉ«µ÷×î´óÖµ
-	int m_nNumTB1;                  //¼ì²â³öµÄµÚÒ»ÀàÄ¿±êÊıÁ¿£¨¼òµ¥ÎŞ·ÖÖ§£©
-	int m_nNumTB2;                  //¼ì²â³öµÄµÚ¶şÀàÄ¿±êÊıÁ¿£¨ÖØµşÕ³Á¬£©
+	cv::Size 	m_ImgSize;              //å›¾åƒå¤§å°
+	//CBlobResult m_blobResult;       //å½“å‰å›¾åƒblobåˆ†æç»“æœ
+	double m_maxHue;				//å½“å‰å›¾åƒå—è‰²è°ƒæœ€å¤§å€¼
+	int m_nNumTB1;                  //æ£€æµ‹å‡ºçš„ç¬¬ä¸€ç±»ç›®æ ‡æ•°é‡ï¼ˆç®€å•æ— åˆ†æ”¯ï¼‰
+	int m_nNumTB2;                  //æ£€æµ‹å‡ºçš„ç¬¬äºŒç±»ç›®æ ‡æ•°é‡ï¼ˆé‡å ç²˜è¿ï¼‰
 
-public://Í¼Ïñ³ÉÔ±±äÁ¿
-	cv::Mat m_pSrcImg;           //ÊäÈëÍ¼Ïñ
-	cv::Mat m_pHueImg;           //HÍ¨µÀÍ¼Ïñ
-	cv::Mat m_pSaturationImg;    //SÍ¨µÀÍ¼Ïñ
-	cv::Mat m_pValueImg;         //VÍ¨µÀÍ¼Ïñ
-	cv::Mat m_pGrayImg;          //GRYAÍ¼Ïñ
-	cv::Mat m_pLensNoiseMaskImg;  //¾µÍ·ÔÓÖÊÔëÉùÑÚÄ¤Í¼Ïñ
-	cv::Mat m_pCoarseSegImg;	   //´Ö·Ö¸î½á¹ûÍ¼Ïñ(µ¥Í¨µÀ)
-	cv::Mat m_pPostSegImg;      //·Ö¸î½á¹ûºó´¦Àí½á¹û(µ¥Í¨µÀ£©
-	cv::Mat m_pClassifiedSrcImg;          //·ÖÀà½á¹ûÍ¼Ïñ£¨ÔÚÔ­Ê¼Í¼ÏñÉÏ±ê×¢£¬ÈıÍ¨µÀ£©
-	cv::Mat m_pClassifiedBin3CImg;        //·ÖÀà½á¹ûÍ¼Ïñ£¨ÔÚ¶şÖµÍ¼ÏñÉÏ±ê×¢£¬ÈıÍ¨µÀ£©
+public://å›¾åƒæˆå‘˜å˜é‡
+	cv::Mat m_pSrcImg;           //è¾“å…¥å›¾åƒ
+	cv::Mat m_pHueImg;           //Hé€šé“å›¾åƒ
+	cv::Mat m_pSaturationImg;    //Sé€šé“å›¾åƒ
+	cv::Mat m_pValueImg;         //Vé€šé“å›¾åƒ
+	cv::Mat m_pGrayImg;          //GRYAå›¾åƒ
+	cv::Mat m_pLensNoiseMaskImg;  //é•œå¤´æ‚è´¨å™ªå£°æ©è†œå›¾åƒ
+	cv::Mat m_pCoarseSegImg;	   //ç²—åˆ†å‰²ç»“æœå›¾åƒ(å•é€šé“)
+	cv::Mat m_pPostSegImg;      //åˆ†å‰²ç»“æœåå¤„ç†ç»“æœ(å•é€šé“ï¼‰
+	cv::Mat m_pClassifiedSrcImg;          //åˆ†ç±»ç»“æœå›¾åƒï¼ˆåœ¨åŸå§‹å›¾åƒä¸Šæ ‡æ³¨ï¼Œä¸‰é€šé“ï¼‰
+	cv::Mat m_pClassifiedBin3CImg;        //åˆ†ç±»ç»“æœå›¾åƒï¼ˆåœ¨äºŒå€¼å›¾åƒä¸Šæ ‡æ³¨ï¼Œä¸‰é€šé“ï¼‰
 	
-	std::vector<std::vector<cv::Point>> contour;  //·Ö¸îºóÌáÈ¡µÄÂÖÀª
+	std::vector<std::vector<cv::Point>> contour;  //åˆ†å‰²åæå–çš„è½®å»“
 	
-	cv::Rect *m_rectTB1;  //µÚÒ»ÀàÄ¿±êµÄ¾ØĞÎ¿ò (´ı¸Ä)
-	cv::Rect *m_rectTB2;  //µÚ¶şÀàÄ¿±êµÄ¾ØĞÎ¿ò (´ı¸Ä)
+	cv::Rect *m_rectTB1;  //ç¬¬ä¸€ç±»ç›®æ ‡çš„çŸ©å½¢æ¡† (å¾…æ”¹)
+	cv::Rect *m_rectTB2;  //ç¬¬äºŒç±»ç›®æ ‡çš„çŸ©å½¢æ¡† (å¾…æ”¹)
 
-public:	//Í¼Ïñ·Ö¸îº¯Êı£¬ÕâĞ©º¯Êı²ÉÓÃ²»Í¬µÄ·Ö¸î·½·¨¶ÔÊäÈëÍ¼Ïñ½øĞĞ·Ö¸î¡£
-	    //ĞèÒª×¢ÒâµÄÊÇ£ºÄ¿Ç°µÄËã·¨²ÉÓÃSegmentColorImageMixture4º¯Êı£¬¸Ãº¯Êıµ÷ÓÃÁËSegmentColorImageHSVFixedAndGrayAdapt¡£
+public:	//å›¾åƒåˆ†å‰²å‡½æ•°ï¼Œè¿™äº›å‡½æ•°é‡‡ç”¨ä¸åŒçš„åˆ†å‰²æ–¹æ³•å¯¹è¾“å…¥å›¾åƒè¿›è¡Œåˆ†å‰²ã€‚
+	    //éœ€è¦æ³¨æ„çš„æ˜¯ï¼šç›®å‰çš„ç®—æ³•é‡‡ç”¨SegmentColorImageMixture4å‡½æ•°ï¼Œè¯¥å‡½æ•°è°ƒç”¨äº†SegmentColorImageHSVFixedAndGrayAdaptã€‚
 	
 	
 	
 	void SegmentColorImageHSVFixedAndGrayAdapt(double huethr, double satthr, double satthr2,double valthr, int templateSize);
-	void SegmentColorImageMixture4(double huethr=140, double satthr=5, double satthr2=150,double valthr=156);
+	void SegmentColorImageMixture4(double huethr=125, double satthr=15, double satthr2=150,double valthr=140);
 
-public://»ùÓÚ¾ö²ßÊ÷µÄÄ¿±ê·ÖÀàº¯Êı£¬ÎªÁËĞ§ÂÊ£¬²ÉÓÃIf,thenµÄ·½Ê½Ğ´¡£
+public://åŸºäºå†³ç­–æ ‘çš„ç›®æ ‡åˆ†ç±»å‡½æ•°ï¼Œä¸ºäº†æ•ˆç‡ï¼Œé‡‡ç”¨If,thençš„æ–¹å¼å†™ã€‚
 	void ClassifyObject();
 
-public://ÉèÖÃ¼°ÌŞ³ı¾µÍ·ÔÓÖÊº¯Êı¡£
+public://è®¾ç½®åŠå‰”é™¤é•œå¤´æ‚è´¨å‡½æ•°ã€‚
 	void SetLensNoiseMaskImg(cv::Mat &maskimg);
 	void EliminateLensNoise(void);
 	cv::Mat MakeLensNoiseMaskImage(cv::Mat &grayimg);
 
-public:	//»ñÈ¡´¦Àí½á¹ûº¯Êı£¨½áºË¸Ë¾úµÄ¸öÊı£©
+public:	//è·å–å¤„ç†ç»“æœå‡½æ•°ï¼ˆç»“æ ¸æ†èŒçš„ä¸ªæ•°ï¼‰
 	UINT GetTB2Num();
 	UINT GetTB1Num();
 
