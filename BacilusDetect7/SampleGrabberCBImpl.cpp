@@ -59,7 +59,7 @@ STDMETHODIMP SampleGrabberCBImpl::BufferCB( double SampleTime, BYTE *pBuffer, lo
 	m_FrameNum++;
 
 	::memcpy(m_pCam->GetBufferPtr(), pBuffer, BufferLen);
-//	m_pCam->SwitchBuffer();
+	m_pCam->SwitchBuffer();
 	m_pEventCaptured->SetEvent();
 	if (m_OutputWnds.size() > 0)
 	{

@@ -406,10 +406,10 @@ void CProSingleImage::ClassifyObject()
 		
 	}
 
-	cv::namedWindow("result_1",CV_WINDOW_AUTOSIZE);
-	cv::imshow("restult_1", m_pClassifiedSrcImg);
-	cv::namedWindow("result_2",CV_WINDOW_AUTOSIZE);
-	cv::imshow("restult_2", m_pClassifiedBin3CImg);
+// 	cv::namedWindow("result_1",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("restult_1", m_pClassifiedSrcImg);
+// 	cv::namedWindow("result_2",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("restult_2", m_pClassifiedBin3CImg);
 	
 	
 	cv::waitKey(0);
@@ -760,8 +760,8 @@ void CProSingleImage::SegmentColorImageHSVFixedAndGrayAdapt(double huethr, doubl
     //cvDilate(tmpimg1,tmpimg1);
 	cv::erode(tmpimg1,tmpimg1,element);
 //	cvErode(tmpimg1,tmpimg1);
-	cv::namedWindow("三通道相交",CV_WINDOW_AUTOSIZE);
-	cv::imshow("三通道相交", tmpimg1);
+// 	cv::namedWindow("三通道相交",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("三通道相交", tmpimg1);
 
 
 	/********************************************************************************/
@@ -769,8 +769,8 @@ void CProSingleImage::SegmentColorImageHSVFixedAndGrayAdapt(double huethr, doubl
 	/********************************************************************************/
 	cv::adaptiveThreshold(m_pGrayImg,tmpimg2,255,CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV ,templateSize,5);
 	medianBlur(tmpimg2,tmpimg2,3); // 中值滤波
-	cv::namedWindow("高斯加权自适应",CV_WINDOW_AUTOSIZE);
-	cv::imshow("高斯加权自适应", tmpimg2);
+// 	cv::namedWindow("高斯加权自适应",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("高斯加权自适应", tmpimg2);
 
 
 	/********************************************************************************/
@@ -778,8 +778,8 @@ void CProSingleImage::SegmentColorImageHSVFixedAndGrayAdapt(double huethr, doubl
 	/********************************************************************************/
 	cv::bitwise_and(tmpimg1,tmpimg2,m_pCoarseSegImg);//粗分割结果存放在m_pCoarseSegImg
 
-	cv::namedWindow("初始粗分割结果",CV_WINDOW_AUTOSIZE);
-	cv::imshow("初始粗分割结果", m_pCoarseSegImg);
+// 	cv::namedWindow("初始粗分割结果",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("初始粗分割结果", m_pCoarseSegImg);
 
 	/********************************************************************************/
 	//第四步：剔除镜头杂质
@@ -903,10 +903,10 @@ void CProSingleImage::SegmentColorImageMixture4(double huethr, double satthr, do
 		}
 	 }
     
-	cv::drawContours(m_pPostSegImg,contour,-1,cv::Scalar(255),CV_FILLED,8);
-	
-	cv::namedWindow("后处理分割结果",CV_WINDOW_AUTOSIZE);
-	cv::imshow("后处理分割结果",m_pPostSegImg);
+// 	cv::drawContours(m_pPostSegImg,contour,-1,cv::Scalar(255),CV_FILLED,8);
+// 	
+// 	cv::namedWindow("后处理分割结果",CV_WINDOW_AUTOSIZE);
+// 	cv::imshow("后处理分割结果",m_pPostSegImg);
 		       
 }
 
