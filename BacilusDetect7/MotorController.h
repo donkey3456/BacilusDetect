@@ -168,8 +168,8 @@
 #define MOTOR_XY_RESOLUTION 25.4		//unit:um
 #define MOTOR_Z_DIVIDE 4
 #define MOTOR_XY_DIVIDE 4
-#define MOTOR_Z_OFFSET_MM -15.8				//有待测量
-#define MOTOR_Z_SAFE_POS_MM 0.6 
+#define MOTOR_Z_OFFSET_MM -14.7				//有待测量
+#define MOTOR_Z_SAFE_POS_MM 0 
 #define MOTOR_CHANGE_SLIDE_X_MM 18
 
 
@@ -230,12 +230,6 @@ public:
 	float				ZMotorSmoothMove2AbsolutePos(float fpos, DISTANCE_UNIT unit = DISTANCE_UNIT_MM);
 	void				XYMotorSmoothMove2Point(cv::Point2f ptPos, DISTANCE_UNIT unit = DISTANCE_UNIT_MM);
 
-	//获取当前状态
-	BOOL				GetCurrentPos(float& fXpos, float& fYpos, float& fZPos);
-	BOOL				GetCurrentStatus(CString &str);
-	BOOL				GetCurrentPosAndStatus(float& fXpos, float& fYpos, float& fZPos, CString &str);
-	BOOL				GetCurrentStatus(MOTOR_STATUS &status);
-
 	//相对运动
 	BOOL				XMotorRelativeMove(float fIncremental, DISTANCE_UNIT nUnit = DISTANCE_UNIT_MM);
 	BOOL				YMotorRelativeMove(float fIncremental, DISTANCE_UNIT nUnit = DISTANCE_UNIT_MM);
@@ -259,7 +253,11 @@ public:
 	BOOL				GetXYMotorPosition(cv::Point2f& ptPos, DISTANCE_UNIT nUnit = DISTANCE_UNIT_MM);
 	BOOL				GetZMotorPosition(float& fZPos, DISTANCE_UNIT nUnit = DISTANCE_UNIT_MM);
 	BOOL				GetXYZMotorPosition(float& fXPos, float& fYPos,float& fZPos, DISTANCE_UNIT nUnit = DISTANCE_UNIT_MM);
-
+	//获取当前状态
+	BOOL				GetCurrentPos(float& fXpos, float& fYpos, float& fZPos);
+	BOOL				GetCurrentStatus(CString &str);
+	BOOL				GetCurrentPosAndStatus(float& fXpos, float& fYpos, float& fZPos, CString &str);
+	BOOL				GetCurrentStatus(MOTOR_STATUS &status);
 
 	//单位转换,系统默认为毫米制
 	float				ZUnit2Milli(float fUnit,DISTANCE_UNIT unit = DISTANCE_UNIT_MM);
@@ -269,6 +267,14 @@ public:
 
 	BOOL				WaitUntilDone(DWORD dwTimeout = INFINITE);
 
+	BOOL				QueryCurrentStatus();
+
+	float				GetYMotorPosition(){return m_fYPos;}
+	float				GetXMotorPosition(){return m_fXPos;}
+	cv::Point2f			GetXYMotorPosition(){return cv::Point2f(m_fXPos,m_fYPos);}
+	float				GetZMotorPosition(){return m_fZPos;}
+	cv::Point3f			GetXYZMotorPosition(){return cv::Point3f(m_fXPos,m_fYPos,m_fZPos);}
+	MOTOR_STATUS		GetCurrentStatus(){return m_nStatus;}
 protected:
 	CMotorController(void);
 	~CMotorController(void);
@@ -285,7 +291,7 @@ private:
 
 	BOOL				SetZero(float fX = 0, float fY = 0, float fZ = 0, DISTANCE_UNIT unit = DISTANCE_UNIT_MM);
 
-	BOOL				QueryCurrentStatus();
+
 
 	static void			WChar2char(wchar_t* pSrc,char*& pDes,int nLength);
 private:

@@ -835,7 +835,9 @@ BOOL CMotorController::Restart()
 	}
 	ForceAbort();
 	Home();
-	SetZero();
+	SetZero(0,0,MOTOR_Z_OFFSET_MM);
+	//走到更换玻片的位置
+	XMotorRelativeMove(MOTOR_CHANGE_SLIDE_X_MM);
 
 	return TRUE;
 }

@@ -2,7 +2,7 @@
 
 #include "define.h"
 
-#define MOTOR_Z_MOVE_SAFE_POSITION 0.6			//mm
+#define MOTOR_Z_MOVE_SAFE_POSITION 0.2			//mm
 #define MOTOR_Z_MOVE_SPEED_MAX 50/60.0				//mm/s
 #define MOTOR_XY_MOVE_SPEED_MAX 2000/60.0					//mm/s
 class CMechanism

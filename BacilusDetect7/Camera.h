@@ -50,7 +50,7 @@ private:
 	static CCamera*				m_pInstance;
     BOOL						m_bCapturing;
 	cv::Mat						m_matImage;
-	cv::Mat						m_matBuffer;
+//	cv::Mat						m_matBuffer;
 	CEvent						m_EventCaptured;
 
 	ICaptureGraphBuilder2*		m_pBuilder;
@@ -102,7 +102,7 @@ public:
 	cv::Size	GetCameraImageSize();
 
 private:
-	void		SwitchBuffer();
+// 	void		SwitchBuffer();
 	uchar*		GetBufferPtr();
 };
 

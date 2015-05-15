@@ -116,7 +116,7 @@ BOOL CAutoAdjustLight::TuneLight(void)
 	// 计算图像亮度值	
 	pCamera->EnableNotifyMsg(TRUE);  // 允许摄像机输出图像
 //	Sleep(1000);
-// 	::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
+ 	::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
  	::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
 	::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
 	::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);  //等待摄像机拍摄的新图像数据
@@ -149,11 +149,11 @@ BOOL CAutoAdjustLight::TuneLight(void)
 		newExp = oldExp + fFactor;
 		if ( ( newExp >= 60000 ) || ( newExp <= 0 ) )    // 摄像机曝光时间不能过长（60ms)，也不能过短（0ms)
 		{
-			return FALSE;
+			continue;
 		}
 		pCamera->SetExposureTime(newExp);                  // 设置曝光时间
 //		Sleep(1000);
-// 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
+ 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
  		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);
 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);  //等待摄像机拍摄的新图像数据

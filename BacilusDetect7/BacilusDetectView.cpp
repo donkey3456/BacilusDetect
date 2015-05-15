@@ -1237,13 +1237,13 @@ void AutoScanSlide(CBacilusDetectView* pDetectView)
 		pCam->EnableNotifyMsg(TRUE);
 
 		cv::Mat pcvBestImage ;
-		float fBestFocusPos = AutoFocusWork.GetCurFOVBestImage(&pcvBestImage, curpos, nScanSequenceIndex);
+		float fBestFocusPos = AutoFocusWork.GetCurFOVBestImage(pcvBestImage, curpos, nScanSequenceIndex);
 
 // 		cv::Mat pcvBestImage;
 // 		pCam->GetImage().copyTo(pcvBestImage);
 //		float fBestFocusPos = 0;
 
-		//pCam->EnableNotifyMsg(FALSE);
+		pCam->EnableNotifyMsg(FALSE);
 
 		// 将最佳图像保存在临时文件目录中
 		CString strFileName = SaveImage2JPG(strDirectory, nScanSequenceIndex, pcvBestImage);  //保存图像

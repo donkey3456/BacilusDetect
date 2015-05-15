@@ -4,6 +4,16 @@
 /* 
 	将Opencv1.0的结构修改为Opencv2.4.11的结构
 */
+// revised by bqsong on 2015.5.13
+/* 
+	根据鲁豫杰修改的相机类新的调用图像机制，修改该类中所有相关部分
+	将函数float GetCurFOVBestImage(cv::Mat& matBestImage, CvPoint2D32f cvFOVPosition, int nCurFOVIndex)的输出参数改为Mat引用类型
+*/
+// revised by bqsong on 2015.5.15
+/* 
+	修订BOOL AnalyzeImpurity(cv::Mat matBinaryImage)函数中的Bug
+	改进void GenerateCurDstGrayImg()函数中的代码效率
+*/
 
 #include "ImageProcess.h"
 #include "BacilusDetectView.h"
@@ -177,7 +187,7 @@ private:
 
 public:
 	BOOL  InitAotoFocus( CBacilusDetectView* pDetectView);		// 初始化自动聚焦类
-	float GetCurFOVBestImage(cv::Mat * pmatBestImage, CvPoint2D32f cvFOVPosition, int nCurFOVIndex);	        // 获得当前视野最佳的图像以及焦平面的位置
+	float GetCurFOVBestImage(cv::Mat& matBestImage, CvPoint2D32f cvFOVPosition, int nCurFOVIndex);	        // 获得当前视野最佳的图像以及焦平面的位置
 	//int	  AnalyzeScanedFOVs();                                                                                  // 对已扫描的视野聚焦情况进行分析，根据扫描拓扑结构判断哪些视野需要重新聚焦
 	//int	  GetPostProcessFOVBestImage(IplImage** ppcvBestImage, CvPoint3D32f* pcvFOV3DPos, int nIndex);          // 获得后处理视野的最佳的图像、视野位置、焦平面位置以及视野扫描序号
 	BOOL  EstInitFocusPosition();                                                                               // 利用玻片上的红十字估计目标层焦平面的初始位置

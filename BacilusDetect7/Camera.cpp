@@ -66,7 +66,7 @@ CCamera::CCamera(void)
 	m_pSource = NULL;
 
 	m_matImage.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
-	m_matBuffer.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
+//	m_matBuffer.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
 	m_matImage = 0;
 }
 
@@ -278,16 +278,17 @@ cv::Size2f CCamera::GetCameraFOVSize()
 
 uchar* CCamera::GetBufferPtr()
 {
-	return m_matBuffer.ptr();
+//	return m_matBuffer.ptr();
+	return m_matImage.ptr();
 }
 
-void CCamera::SwitchBuffer()
-{
-	m_matImage = m_matBuffer;	//将原m_matImage release，并使m_matImage变成m_matBuffer
-	cv::Mat temp;
-	temp.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
-	m_matBuffer = temp;
-}
+// void CCamera::SwitchBuffer()
+// {
+// 	m_matImage = m_matBuffer;	//将原m_matImage release，并使m_matImage变成m_matBuffer
+// 	cv::Mat temp;
+// 	temp.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
+// 	m_matBuffer = temp;
+// }
 
 BOOL CCamera::StartPreview()
 {

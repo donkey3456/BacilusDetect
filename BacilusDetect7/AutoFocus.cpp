@@ -67,12 +67,12 @@ bool  lesser_FOVPosition( CAutoFocus::StructFOVCostPeakData elem1, CAutoFocus::S
 
 CAutoFocus::CAutoFocus(void)
 	: m_fFPS( 15 )
-	, m_fZRefPosition( 40 )  // um
+	, m_fZRefPosition( 0 )  // um
 	, m_fMaxStep( 5 )   // um
 	, m_fMinStep( 1 )   // um
 {	
 	m_fWorkPositionMechanics[0] = m_fZRefPosition;
-	m_fWorkPositionMechanics[1] = 620;
+	m_fWorkPositionMechanics[1] = 600;
 	//m_fWorkPositionMechanics[1][0] = 70;       // 只有1个工位
 	//m_fWorkPositionMechanics[1][1] = 690;
 	//m_fWorkPositionMechanics[2][0] = 150;
@@ -185,38 +185,45 @@ void  CAutoFocus::GenerateCurDstGrayImg()
 	cv::resize(matGrayImg,  matHalfGrayImg,  matHalfGrayImg.size());
 	
 	// 参考图像减去当前图像
-	cv::Mat_<uchar> mat1 = m_matRefGrayImg;
-	cv::Mat_<uchar> mat2 = matHalfGrayImg;
-	int src1, src2, dst;
-	int i, j, imin = 255;
-	for ( i = 0; i < m_matRefGrayImg.rows; i++ )
+	//cv::Mat_<uchar> mat1 = m_matRefGrayImg;
+	//cv::Mat_<uchar> mat2 = matHalfGrayImg;
+	//int src1, src2, dst;
+	//int i, j, imin = 255;
+	//for ( i = 0; i < m_matRefGrayImg.rows; i++ )
+	//{
+	//	for ( j = 0; j < m_matRefGrayImg.cols; j++ )
+	//	{
+	//		src1 = mat1(i,j);
+	//		src2 = mat2(i,j);
+	//		dst = src1 - src2;
+	//		if ( imin > dst ) 
+	//		{ 
+	//			imin = dst; 
+	//		}
+	//	}
+	//}
+	cv::Mat temp(m_matRefGrayImg.size(), CV_16SC1);
+	cv::subtract(m_matRefGrayImg, matHalfGrayImg, temp, cv::noArray(), CV_16S);
+	double minVal;
+	cv::minMaxLoc(temp, &minVal, NULL, NULL, NULL);
+	//imin = minVal;
+	if ( minVal > 0 )
 	{
-		for ( j = 0; j < m_matRefGrayImg.cols; j++ )
-		{
-			src1 = mat1(i,j);
-			src2 = mat2(i,j);
-			dst = src1 - src2;
-			if ( imin > dst ) 
-			{ 
-				imin = dst; 
-			}
-		}
-	}
-	if ( imin > 0 )
-	{
-		imin = 0;
+		minVal = 0;
 	}
 
-	for ( i = 0; i < m_matRefGrayImg.rows; i++ )
-	{
-		for ( j = 0; j < m_matRefGrayImg.cols; j++ )
-		{
-			src1 = mat1(i,j);
-			src2 = mat2(i,j);
-			dst = src1 - src2;
-			mat2(i,j) = dst - imin;
-		}
-	}
+	//for ( i = 0; i < m_matRefGrayImg.rows; i++ )
+	//{
+	//	for ( j = 0; j < m_matRefGrayImg.cols; j++ )
+	//	{
+	//		src1 = mat1(i,j);
+	//		src2 = mat2(i,j);
+	//		dst = src1 - src2;
+	//		mat2(i,j) = dst - imin;
+	//	}
+	//}
+	cv::subtract(m_matRefGrayImg, matHalfGrayImg, temp, cv::noArray(), CV_16S);
+	cv::subtract(temp, minVal, matHalfGrayImg , cv::noArray(), CV_8U);
 
 	cv::medianBlur(matHalfGrayImg,m_matCurDstGrayImg,3);
 
@@ -231,8 +238,9 @@ void  CAutoFocus::RecordSampleData(float fStarPos, float fEndPos, float fStep, S
 	// Z轴运动到上面的起始点
 	pMotorController->ZMotorSmoothMove2AbsolutePos( fStarPos, DISTANCE_UNIT_UM );
 	
-	// 设置搜索过程中Z轴电机运动速度	
-	pMotorController->SetZMotorSpeed(fStep * m_fFPS, DISTANCE_UNIT_UM);
+	// 设置搜索过程中Z轴电机运动速度
+	;
+	pMotorController->SetZMotorSpeed(fStep *  m_fFPS, DISTANCE_UNIT_UM);
 		
 	using namespace std;
 	m_vSampleData.clear();
@@ -307,7 +315,7 @@ void  CAutoFocus::RecordSampleData(float fStarPos, float fEndPos, float fStep, S
 		}
 	}
 	m_vSampleData.shrink_to_fit();
-
+	//DrawCostCurve(m_vSampleData.begin(),m_vSampleData.end());
 	pCamera = NULL;
 	pMotorController = NULL;
 }
@@ -531,43 +539,43 @@ BOOL  CAutoFocus::AnalyzeImpurity(cv::Mat matBinaryImage)
 	vector<cv::Vec4i> hierarchy;
 	vector<vector<cv::Point> > contour;
 	findContours( matBinaryImage,  contour, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-
-	vector<vector<cv::Point> >::const_iterator cIter;
-	for ( cIter = contour.begin(); cIter < contour.end();  cIter++)
-	{
-		double fArea = fabs( contourArea(contour) );
-		cv::RotatedRect Box = minAreaRect(contour);
-		if ( fArea > iImpurityArea )    // 目标的面积比较大，不是杂质
-		{
-			bRet = FALSE;
-			break;
-		}
-		else if (  fArea > iSmallArea ) // 根据目标的长宽比，判断目标是否为杂质
-		{
-			float fmin, fmax;
-			if ( Box.size.width < Box.size.height )
-			{
-				fmin = Box.size.width;
-				fmax = Box.size.height;
-			}
-			else
-			{
-				fmin = Box.size.height;
-				fmax = Box.size.width;
-			}
-			if ( fmax != 0 )
-			{
-				if ( (fmin / fmax) < fLenghWidthRatio )   // 如果目标是长条形状，则可能是细菌，不是杂质
-				{
-					bRet = FALSE;
-					break;
-				}									      // 如果目标的形状比较接近圆形，则是杂质，继续寻找下一个目标对象
-			}
-		}
-		else                            // 目标的面积过小，是杂质，继续寻找下一个目标对象
-		{
-		}				
-	}
+ 
+ 	vector<vector<cv::Point> >::const_iterator cIter;
+ 	for ( cIter = contour.begin(); cIter < contour.end();  cIter++)
+ 	{
+ 		double fArea = fabs( contourArea(*cIter) );
+ 		cv::RotatedRect Box = minAreaRect(*cIter);
+ 		if ( fArea > iImpurityArea )    // 目标的面积比较大，不是杂质
+ 		{
+ 			bRet = FALSE;
+ 			break;
+ 		}
+ 		else if (  fArea > iSmallArea ) // 根据目标的长宽比，判断目标是否为杂质
+ 		{
+ 			float fmin, fmax;
+ 			if ( Box.size.width < Box.size.height )
+ 			{
+ 				fmin = Box.size.width;
+ 				fmax = Box.size.height;
+ 			}
+ 			else
+ 			{
+ 				fmin = Box.size.height;
+ 				fmax = Box.size.width;
+ 			}
+ 			if ( fmax != 0 )
+ 			{
+ 				if ( (fmin / fmax) < fLenghWidthRatio )   // 如果目标是长条形状，则可能是细菌，不是杂质
+ 				{
+ 					bRet = FALSE;
+ 					break;
+ 				}									      // 如果目标的形状比较接近圆形，则是杂质，继续寻找下一个目标对象
+ 			}
+ 		}
+ 		else                            // 目标的面积过小，是杂质，继续寻找下一个目标对象
+ 		{
+ 		}				
+ 	}
 
 	return bRet;
 }
@@ -781,6 +789,7 @@ void  CAutoFocus::AnalyzeFocusPosProb(float fStarPos, float fEndPos, float fStep
 				*ptemp = 0;
 
 				cv::Rect ROIRect(i*m_iSubImgWidth, j*m_iSubImgHeight, m_iSubImgWidth, m_iSubImgHeight);      //ROI矩形 
+
 				cv::Mat matDstGrayImg_ROI(SBestImageData.matDstGrayImg, ROIRect);
 				//cvSetImageROI( SBestImageData.pcvDstGrayImg, cvRect(i*m_iSubImgWidth, j*m_iSubImgHeight, m_iSubImgWidth, m_iSubImgHeight) );
 				if ( *pfSubImgCost> fCostThreshold )
@@ -809,6 +818,7 @@ void  CAutoFocus::AnalyzeFocusPosProb(float fStarPos, float fEndPos, float fStep
 				ptemp++;
 			}
 		}	
+
 		(*PeakIter).iSubImgCount = iSubImgCount;
 
 		delete [] piSubImgInfo;
@@ -963,7 +973,7 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 
 	// Z轴运动到开始处
 	pMotorController->ZMotorSmoothMove2AbsolutePos(fStartPos, DISTANCE_UNIT_UM);
-
+	pMotorController->WaitUntilDone();
 	// 设置搜索过程中Z轴电机运动速度	
 	pMotorController->SetZMotorSpeed(fStep * m_fFPS, DISTANCE_UNIT_UM);  
 
@@ -981,19 +991,32 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 	float fBestDefCost = -1;
 	int i, j;
 	float*	pfSubImgCost = new float[m_iSubImgRow*m_iSubImgCol];
+	
+	//debug
+	LARGE_INTEGER l1,l2,lf;
+	QueryPerformanceFrequency(&lf);
+	vector<double> times;
 	for ( nIndex = 0; nIndex<iDataSize; nIndex++ )
 	{	
 		StructSearchData structSearchData;
+		//更新当前状态
+		pMotorController->QueryCurrentStatus();
 
+		// 电机停止运动，搜索范围结束
+		DWORD dwRes = WaitForSingleObject(pMotorController->GetIdleHandle(),0);
+		if (dwRes == WAIT_OBJECT_0)
+		{
+			break;
+		}
+		//如果电机在运动，先获得当前位置
+		structSearchData.fSamplePosition = pMotorController->GetZMotorPosition();
+		
+		//等待上一张照片
 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);		// 新的图像数据到达
 		// 将采集到的当前原始图像转换为待评估的灰度图像
 		GenerateCurDstGrayImg();
-
+		
 		// 获得Z轴当前的位置, unit: um
-		float fZPos;
-		pMotorController->GetZMotorPosition(fZPos,DISTANCE_UNIT_UM); 
-		structSearchData.fSamplePosition = fZPos;    
-				
 		// 计算当前灰度图像的清晰度	
 		cv::Scalar mean, temp; 	
 		float fSum = 0;
@@ -1013,7 +1036,7 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 			}
 		}	
 		structSearchData.fSampleImageCost = fSum / (m_iSubImgRow*m_iSubImgCol);
-		
+
 		if ( fBestDefCost < structSearchData.fSampleImageCost )
 		{
 			fBestDefCost = structSearchData.fSampleImageCost;
@@ -1031,13 +1054,6 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 				*pfTemp++ = *pfSubImgCostTemp++;
 			}
 		}	
-
-		volatile MOTOR_STATUS	status;
-		pMotorController->GetCurrentStatus((MOTOR_STATUS)status);
-		if ( status != MOTOR_RUN )						 // 电机停止运动，搜索范围结束
-		{
-			break;
-		}
 		
 		vSampleData.push_back(structSearchData);
 
@@ -1045,18 +1061,25 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 		{
 			pMotorController->Stop();
 			break;
-		}			
+		}	
 	}
 	vSampleData.shrink_to_fit();
 	delete [] pfSubImgCost;
 	
-
+	pMotorController = NULL;
+	
+	pCamera = NULL;
 	//==============================================================//
 	//DrawCostCurve(vSampleData.begin(), vSampleData.end());	
 	//==============================================================//
 
+
 	// Debug
 	float fTempL = vSampleData.size();
+	if ( fTempL <= 0 )
+	{
+		return -1;
+	}
 	m_File.Write(&fTempL, sizeof(float));
 	vector <StructSearchData>::iterator IterTemp;
 	for ( IterTemp = vSampleData.begin(); IterTemp != vSampleData.end(); IterTemp++ )
@@ -1074,9 +1097,6 @@ int   CAutoFocus::SearchBestImage(StructBestImageData* pSBestImageData /*Output*
 	{
 		return -1;
 	}
-
-	pMotorController = NULL;
-	pCamera = NULL;
 
 	return 0;
 }
@@ -1158,6 +1178,11 @@ BOOL  CAutoFocus::SearchPeakStop(vector <StructSearchData> * pvSampleData)
 
 BOOL  CAutoFocus::WhetherExtendRangeDown(float fImageCostThreshold, float fZeroSkewError)
 {
+	if (m_vSampleData.size() < 3)
+	{
+		return TRUE;
+	}
+
 	vector <StructSearchData>::iterator Iter;
 	Iter = m_vSampleData.end() - 1;
 	float fDeltaCost = (*Iter).fSampleImageCost - (*(Iter-1)).fSampleImageCost;
@@ -1174,6 +1199,11 @@ BOOL  CAutoFocus::WhetherExtendRangeDown(float fImageCostThreshold, float fZeroS
 
 BOOL  CAutoFocus::WhetherExtendRangeUp(float fImageCostThreshold, float fZeroSkewError)
 {
+	if (m_vSampleData.size() < 3)
+	{
+		return TRUE;
+	}
+
 	vector <StructSearchData>::iterator Iter;
 	Iter = m_vSampleData.begin() + 1;
 	if  (   (*Iter).fSampleImageCost > (*(m_vSampleData.begin())).fSampleImageCost )
@@ -1506,7 +1536,7 @@ BOOL  CAutoFocus::InitAotoFocus( CBacilusDetectView* pDetectView)
 } 
 
 
-float CAutoFocus::GetCurFOVBestImage(cv::Mat * pmatBestImage /*Output*/, CvPoint2D32f cvFOVPosition, int nCurFOVIndex)
+float CAutoFocus::GetCurFOVBestImage(cv::Mat& matBestImage /*Output*/, CvPoint2D32f cvFOVPosition, int nCurFOVIndex)
 {	
 	CMotorController* pMotorController = CMotorController::GetInstance();  
 
@@ -1582,7 +1612,7 @@ float CAutoFocus::GetCurFOVBestImage(cv::Mat * pmatBestImage /*Output*/, CvPoint
 	//m_arrayFOVFocusInfo[ m_pScanRoute->ColNum * curFOVMatrix.row + curFOVMatrix.col ].iValidSubImgCount = m_iValidSubImgCount;
 
 	// Output
-	*pmatBestImage = m_matBestImage.clone(); 
+	matBestImage = m_matBestImage.clone(); 
 	pMotorController = NULL;
 	return fBestFocusPos;
 }
@@ -1914,6 +1944,8 @@ BOOL  CAutoFocus::SearchRedCrossPosition(cv::Point2f startPos, int iScanSign)
 		
 		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);		// 新的图像数据到达
 
+		 matImage = pCamera->GetImage();                       // 摄像机拍摄到的图像
+
 		// 获得当前FOV的XY坐标
 		cv::Point2f curFOVPosition;
 		pMotorController->GetXYMotorPosition(curFOVPosition, DISTANCE_UNIT_UM);
@@ -1942,6 +1974,8 @@ BOOL  CAutoFocus::SearchRedCrossPosition(cv::Point2f startPos, int iScanSign)
 			pMotorController->WaitUntilDone();
 
 			::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);		// 新的图像数据到达
+
+			 matImage = pCamera->GetImage();                       // 摄像机拍摄到的图像
 
 			// 获得当前FOV的XY坐标
 			cv::Point2f curFOVPosition;
