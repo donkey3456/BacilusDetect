@@ -378,13 +378,8 @@ void CMicrosopeControlDlg::OnBnClickedBtnExpotime()
 void CMicrosopeControlDlg::OnBnClickedBtnWhitebalance()
 {
 	// 设置自动白平衡的区域：纯白或灰色区域
-	RECT			auxRect;        // 设置自动白平衡的区域：纯白或灰色区域
-	auxRect.top = 100;
-	auxRect.left = 100;
-	auxRect.bottom = CAMERA_IMAGE_HEIGHT-100;
-	auxRect.left = CAMERA_IMAGE_WIDTH-100;
 	CCamera* pCam = CCamera::GetInstance();
-	pCam->AutoWhiteBalance(&auxRect);
+	pCam->AutoWhiteBalance();
 }
 
 

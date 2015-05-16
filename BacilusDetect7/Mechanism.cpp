@@ -13,7 +13,7 @@ CMechanism::CMechanism(void)
 	m_YMinRange = -38000;
 	m_ZMaxRange = 0;
 	m_ZMinRange = -14000;
-	m_ZSafeUpperPosition = 200;
+	m_ZSafeUpperPosition = MOTOR_Z_MOVE_SAFE_POSITION * 1000;
 	m_ptSlideOrigin.x = -4183;
 	m_ptSlideOrigin.y = -28500;
 	

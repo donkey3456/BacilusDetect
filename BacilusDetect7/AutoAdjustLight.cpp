@@ -106,12 +106,8 @@ BOOL CAutoAdjustLight::TuneLight(void)
 	// 自动白平衡初始设置
 	pMotorController->ZMotorSmoothMove2AbsolutePos(m_fAdjustLightPositionZ, DISTANCE_UNIT_UM);
 	Sleep(200);	
-	RECT  auxRect;        // 设置自动白平衡的区域：纯白或灰色区域
-	auxRect.top = 100;
-	auxRect.left = 100;
-	auxRect.bottom = matImage.size().height - 100;
-	auxRect.left = matImage.size().width - 100;
-	pCamera->AutoWhiteBalance(&auxRect);
+
+	pCamera->AutoWhiteBalance();
 
 	// 计算图像亮度值	
 	pCamera->EnableNotifyMsg(TRUE);  // 允许摄像机输出图像
@@ -163,7 +159,7 @@ BOOL CAutoAdjustLight::TuneLight(void)
 	}
 
 	// 再做一次白平衡
-	pCamera->AutoWhiteBalance(&auxRect);  
+	pCamera->AutoWhiteBalance();  
 
 	pCamera = NULL;
 	pMotorController = NULL;

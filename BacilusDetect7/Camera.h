@@ -27,16 +27,29 @@
 															*/
 //***********************************************************//
 ///////////////////////////////////////////////////////////////
-#include "SampleGrabberCBImpl.h"
 #include <vector>
 #include "opencv2\opencv.hpp"
 
-#define CAMERA_PIXEL_SIZE_UM 6.45
+#ifdef WIN32
+#include "xiApi.h"
+#else
+#include <m3api/xiApi.h>
+#endif
+
+#define CAMERA_PIXEL_SIZE_UM 5.5
 #define LENS_RATIO 100
 
+
+
+
+struct OUTPUT_WINDOW_INFO 
+{
+	HWND hWnd;
+	UINT uiNotifyMsg;
+	BOOL bNotify;
+};
 class CCamera
 {
-	friend class SampleGrabberCBImpl;
 public:
 	//获取全局访问点，只生成一个实例（可重复调用）
 	static CCamera* GetInstance();
@@ -53,20 +66,16 @@ private:
 	cv::Mat						m_matBuffer;
 	CEvent						m_EventCaptured;
 
-	ICaptureGraphBuilder2*		m_pBuilder;
-	IGraphBuilder*				m_pFg;
-	IBaseFilter*				m_pSource;
-	SampleGrabberCBImpl			m_SampleGrabberCBImp;
+	HANDLE						m_hCamera;
 
+	HANDLE						m_hThread;
+	ULONG						m_ulFrameNum;
+	std::vector<OUTPUT_WINDOW_INFO>	m_OutputWnds;
+	CRITICAL_SECTION			m_WndsPro;
+	XI_IMG						m_ImageBuffer;
 //内部操作
 private:
-	BOOL		MakeBuilderAndGraph();
-	BOOL		InitFilters();
-	BOOL		StartPreview();
-	void		ReleaseFG();
-	void		StopPreview();
-	PITOUPCAM_WHITEBALANCE_CALLBACK fnWBProc(const int aGain[3], void* pCtx);
-
+	int FindWndIndex(HWND hWnd);
 //接口
 public:
 	// 旧方法，连接相机与显示
@@ -77,18 +86,18 @@ public:
 	// 新方法，连接摄像机
 	BOOL		Open();
 	// 新方法，连接显示
-	BOOL		AddOutputWnd(HWND hParent, UINT NotifyMsg);
+	void		AddOutputWnd(HWND hParent, UINT NotifyMsg);
 	// 新方法，连接
-	BOOL		DeleteOutputWnd(HWND hParent);
+	void		DeleteOutputWnd(HWND hParent);
 	// 获取最新图像
 	cv::Mat		GetImage(){return m_matImage;}
 	//关闭相机
 	void		close(void);
 	// 相机控制函数
-	BOOL		AutoWhiteBalance(RECT* pAuxRect);
+	BOOL		AutoWhiteBalance();
 	BOOL		AutoExpoEnable(BOOL bAutoExposure);
 	BOOL		SetExposureTime(ULONG ExposureTime);
-	ULONG		GetExposureTime();
+	int			GetExposureTime();
 	// 信息获取函数
 	BOOL		isCapturing() { return m_bCapturing; }
 	HANDLE		CapturedEvent() { return HANDLE(m_EventCaptured);}
@@ -102,15 +111,7 @@ public:
 	cv::Size	GetCameraImageSize();
 
 private:
- 	void		SwitchBuffer();
-	uchar*		GetBufferPtr();
+	void			SwitchBuffer();
+	uchar*			GetBufferPtr();
+	static UINT		ReadBuffer(LPVOID pParam);
 };
-
-typedef struct
-{
-	std::wstring	DisplayName;
-	std::wstring	FriendlyName;
-}TCaptureDevice;
-
-
-extern std::vector<TCaptureDevice> dscap_enum_device();

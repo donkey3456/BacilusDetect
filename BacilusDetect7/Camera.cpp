@@ -2,58 +2,6 @@
 #include "Camera.h"
 #include "define.h"
 
-std::vector<TCaptureDevice> dscap_enum_device()
-{
-	std::vector<TCaptureDevice> vec;
-
-	CComPtr<ICreateDevEnum> spCreateDevEnum;
-	HRESULT hr = spCreateDevEnum.CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER);
-	if (spCreateDevEnum)
-	{
-		CComPtr<IEnumMoniker> spEm;
-		hr = spCreateDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &spEm, 0);
-		if (hr == NOERROR)
-		{
-			spEm->Reset();
-
-			ULONG cFetched;
-			IMoniker* pM;
-			while (hr = spEm->Next(1, &pM, &cFetched), hr == S_OK)
-			{
-				WCHAR* wszDisplayName = NULL;
-				if (SUCCEEDED(pM->GetDisplayName(NULL, NULL, &wszDisplayName)))
-				{
-#ifdef _USE_ISTOUPCAMPRESENT_
-					if (!IsToupCamPresent(wszDisplayName))
-					{
-						CoTaskMemFree(wszDisplayName);
-						continue;
-					}
-#endif
-					CComPtr<IPropertyBag> spBag;
-					hr = pM->BindToStorage(0, 0, IID_IPropertyBag, (void**)&spBag);
-					if (spBag)
-					{
-						CComVariant var;
-						var.vt = VT_BSTR;
-						hr = spBag->Read(L"FriendlyName", &var, NULL);
-						if (hr == NOERROR)
-						{
-							TCaptureDevice dev;
-							dev.DisplayName = wszDisplayName;
-							dev.FriendlyName = var.bstrVal;
-							vec.push_back(dev);
-						}
-					}
-					CoTaskMemFree(wszDisplayName);
-				}
-
-				pM->Release();
-			}
-		}
-	}
-	return vec;
-}
 
 CCamera* CCamera::m_pInstance = NULL;
 
@@ -61,13 +9,16 @@ CCamera::CCamera(void)
 {
 	m_bCapturing = FALSE;
 
-	m_pBuilder = NULL;
-	m_pFg = NULL;
-	m_pSource = NULL;
+	m_hCamera = INVALID_HANDLE_VALUE;
+	m_hThread = INVALID_HANDLE_VALUE;
 
 	m_matImage.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
 	m_matBuffer.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
 	m_matImage = 0;
+	m_matBuffer = 0;
+
+	InitializeCriticalSection(&m_WndsPro);
+
 }
 
 CCamera::~CCamera(void)
@@ -77,6 +28,7 @@ CCamera::~CCamera(void)
 	{
 		close();
 	}
+	DeleteCriticalSection(&m_WndsPro);
 }
 
 //内部操作
@@ -99,45 +51,50 @@ void CCamera::close(void)
 	// 关闭摄像机
 	if (m_bCapturing)
 	{
-		StopPreview();
-		ReleaseFG();
 		m_bCapturing = FALSE;
+		xiCloseDevice(m_hCamera);
+		WaitForSingleObject(m_hThread,INFINITE);
+		m_hCamera = INVALID_HANDLE_VALUE;
+		m_hThread = INVALID_HANDLE_VALUE;
 	}
 }
 
 // 禁止和使能摄像机发送消息
 void  CCamera::EnableNotifyMsg(BOOL Enable)
 {
-	m_SampleGrabberCBImp.EnableNotifyMsg(Enable);
+	for (int i = 0; i < m_OutputWnds.size(); i++)
+	{
+		m_OutputWnds[i].bNotify = Enable;
+	}
 }
 
 void CCamera::EnableNotifyMsg( HWND hWnd, BOOL bEnable )
 {
-	m_SampleGrabberCBImp.EnableNotifyMsg(hWnd,bEnable);
+	for (int i = 0; i < m_OutputWnds.size(); i++)
+	{
+		if (m_OutputWnds[i].hWnd == hWnd)
+		{
+			m_OutputWnds[i].bNotify = bEnable;
+			break;
+		}
+	}
 }
 
 // 自动白平衡
-BOOL  CCamera::AutoWhiteBalance(RECT* pAuxRect)
+BOOL  CCamera::AutoWhiteBalance()
 {
 	if ( m_bCapturing )
 	{
-		_ASSERTE(m_pSource != NULL);
-		CComPtr<IToupcam> spToupcam;
-		m_pSource->QueryInterface(IID_IToupcam, (void**)&spToupcam);
-		if (spToupcam == NULL)
+		XI_RETURN res = xiSetParamInt(m_hCamera, XI_PRM_MANUAL_WB, 0);
+		if (res == XI_OK)
 		{
-			return FALSE;
+			return TRUE;
 		}
-		spToupcam->put_AuxRect(pAuxRect);
-		const int aGain[3] = {0,0,0};
-		spToupcam->put_AWBInit(&(CCamera::fnWBProc(aGain,NULL)), NULL);
-	}
-	else
-	{
-		AfxMessageBox(_T("摄像机没有启动"));
+		MessageBox(NULL,_T("不能设置自动白平衡"),_T("Error"),MB_OK);
 		return FALSE;
 	}
-	return TRUE;
+	MessageBox(NULL,_T("未连接相机"),_T("Error"),MB_OK);
+	return FALSE;
 }
 
 // 自动曝光使能和禁止
@@ -145,20 +102,16 @@ BOOL    CCamera::AutoExpoEnable(BOOL bAutoExposure)
 {
 	if ( m_bCapturing )
 	{
-		_ASSERTE(m_pSource != NULL);
-		CComPtr<IToupcam> spToupcam;
-		m_pSource->QueryInterface(IID_IToupcam, (void**)&spToupcam);
-		if (spToupcam == NULL)
-			return FALSE;
-
-		spToupcam->put_AutoExpoEnable(bAutoExposure);
-	}
-	else
-	{
-		AfxMessageBox(_T("摄像机没有启动"));
+		XI_RETURN res = xiSetParamInt(m_hCamera, XI_PRM_AEAG, bAutoExposure);
+		if (res == XI_OK)
+		{
+			return TRUE;
+		}
+		MessageBox(NULL,_T("不能设置自动曝光"),_T("Error"),MB_OK);
 		return FALSE;
 	}
-	return TRUE;
+	MessageBox(NULL,_T("未连接相机"),_T("Error"),MB_OK);
+	return FALSE;
 }
 
 // 自动曝光禁止时，手动设置曝光时间, unit: us
@@ -166,36 +119,30 @@ BOOL	CCamera::SetExposureTime(ULONG ExposureTime)
 {
 	if ( m_bCapturing )
 	{
-		_ASSERTE(m_pSource != NULL);
-		CComPtr<IToupcam> spToupcam;
-		m_pSource->QueryInterface(IID_IToupcam, (void**)&spToupcam);
-		if (spToupcam == NULL)
-			return FALSE;
-
-		spToupcam->put_ExpoTime(ExposureTime);
-	}
-	else
-	{
-		AfxMessageBox(_T("摄像机没有启动"));
+		XI_RETURN res = xiSetParamInt(m_hCamera, XI_PRM_EXPOSURE, ExposureTime);
+		if (res == XI_OK)
+		{
+			return TRUE;
+		}
+		MessageBox(NULL,_T("不能设置曝光时间"),_T("Error"),MB_OK);
 		return FALSE;
 	}
-	return TRUE;
+	MessageBox(NULL,_T("未连接相机"),_T("Error"),MB_OK);
+	return FALSE;
 }
 
-ULONG	CCamera::GetExposureTime()
+int	CCamera::GetExposureTime()
 {
-	ULONG Time = 0;
+	int nTime = 0;
 	if ( m_bCapturing )
 	{
-		_ASSERTE(m_pSource != NULL);
-		CComPtr<IToupcam> spToupcam;
-		m_pSource->QueryInterface(IID_IToupcam, (void**)&spToupcam);
-		if (spToupcam != NULL)
+		XI_RETURN res = xiGetParamInt(m_hCamera, XI_PRM_EXPOSURE, &nTime);
+		if (res != XI_OK)
 		{
-			spToupcam->get_ExpoTime(&Time);
+			return 0;
 		}
 	}
-	return Time;
+	return nTime;
 }
 
 CCamera* CCamera::GetInstance()
@@ -223,47 +170,105 @@ BOOL CCamera::Open()
 	{
 		return TRUE;
 	}
-	
-	//init grabber
-	if (!MakeBuilderAndGraph())
+
+	//打开相机
+	XI_RETURN stat = xiOpenDevice(0, &m_hCamera);
+	if(stat != XI_OK)
 	{
-		ReleaseFG();
-		return FALSE;
-	}
-	if (!InitFilters())
-	{
-		ReleaseFG();
+		MessageBox(NULL,_T("检测不到可用相机"),_T("Error"),MB_OK);
 		return FALSE;
 	}
 
-	if (!StartPreview())
+	//开始采集
+	stat = xiStartAcquisition(m_hCamera);
+	if(stat != XI_OK)
 	{
-		ReleaseFG();
+		MessageBox(NULL,_T("无法获取图像"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
 		return FALSE;
 	}
 
+	//设置初始参数
+	stat = xiSetParamInt(m_hCamera,XI_PRM_IMAGE_DATA_FORMAT,XI_RGB24);
+	if(stat != XI_OK)
+	{
+		MessageBox(NULL,_T("无法设置数据格式，请使用彩色相机"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
+		return FALSE;
+	}
+	stat = xiSetParamInt(m_hCamera,XI_PRM_WIDTH,CAMERA_IMAGE_WIDTH);
+	if(stat != XI_OK)
+	{
+		MessageBox(NULL,_T("无法设置图像宽度"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
+		return FALSE;
+	}
+	stat = xiSetParamInt(m_hCamera,XI_PRM_HEIGHT,CAMERA_IMAGE_HEIGHT);
+	if(stat != XI_OK)
+	{
+		MessageBox(NULL,_T("无法设置图像长度"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
+		return FALSE;
+	}
+
+	stat = xiSetParamInt(m_hCamera, XI_PRM_AUTO_WB, 0);
+	if(stat != XI_OK)
+	{
+		MessageBox(NULL,_T("无法关闭自动白平衡"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
+		return FALSE;
+	}
+
+	stat = xiSetParamInt(m_hCamera, XI_PRM_AEAG, 0);
+	if(stat != XI_OK)
+	{
+		MessageBox(NULL,_T("无法关闭自动曝光"),_T("Error"),MB_OK);
+		xiCloseDevice(m_hCamera);
+		return FALSE;
+	}
+	m_hThread = AfxBeginThread(CCamera::ReadBuffer,this)->m_hThread;
+	m_bCapturing = TRUE;
 	DWORD dwRes = WaitForSingleObject(m_EventCaptured,3000);
 
 	if (dwRes == WAIT_TIMEOUT)
 	{
-		ReleaseFG();
+		xiCloseDevice(m_hCamera);
+		m_bCapturing = FALSE;
 		return FALSE;
 	}
-	m_bCapturing = TRUE;
 
 	return TRUE;
 }
 
-BOOL CCamera::AddOutputWnd( HWND hParent, UINT NotifyMsg )
+void CCamera::AddOutputWnd( HWND hParent, UINT NotifyMsg )
 {
-	m_SampleGrabberCBImp.AddOutputWnd(hParent,NotifyMsg);
-	return FALSE;
+	EnterCriticalSection(&m_WndsPro);
+	int nIndex = FindWndIndex(hParent);
+	if (nIndex != -1)
+	{
+		m_OutputWnds[nIndex].uiNotifyMsg = NotifyMsg;
+		m_OutputWnds[nIndex].bNotify = FALSE;
+	}
+	else
+	{
+		OUTPUT_WINDOW_INFO info;
+		info.hWnd = hParent;
+		info.bNotify = FALSE;
+		info.uiNotifyMsg = NotifyMsg;
+		m_OutputWnds.push_back(info);
+	}
+	LeaveCriticalSection(&m_WndsPro);
 }
 
-BOOL CCamera::DeleteOutputWnd( HWND hParent )
+void CCamera::DeleteOutputWnd( HWND hParent )
 {
-	m_SampleGrabberCBImp.DeleteWnd(hParent);
-	return FALSE;
+	EnterCriticalSection(&m_WndsPro);
+	int nIndex = FindWndIndex(hParent);
+	if (nIndex != -1)
+	{
+		m_OutputWnds.erase(m_OutputWnds.begin() + nIndex);
+	}
+	LeaveCriticalSection(&m_WndsPro);
 }
 
 cv::Size CCamera::GetCameraImageSize()
@@ -279,7 +284,6 @@ cv::Size2f CCamera::GetCameraFOVSize()
 uchar* CCamera::GetBufferPtr()
 {
 	return m_matBuffer.ptr();
-//	return m_matImage.ptr();
 }
 
 void CCamera::SwitchBuffer()
@@ -290,219 +294,53 @@ void CCamera::SwitchBuffer()
 	m_matBuffer = temp;
 }
 
-BOOL CCamera::StartPreview()
-{
-	// run the graph
-	CComPtr<IMediaControl> spMC;
-	HRESULT hr = m_pFg->QueryInterface(IID_IMediaControl, (void**)&spMC);
-	if (SUCCEEDED(hr) && spMC)
-	{
-		hr = spMC->Run();
-		if (FAILED(hr))
-		{
-			// stop parts that ran
-			spMC->Stop();
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-
-BOOL CCamera::MakeBuilderAndGraph()
-{
-	HRESULT hr;
-
-	hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC, IID_ICaptureGraphBuilder2, (void**)&m_pBuilder);
-
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-	
-	hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC, IID_IGraphBuilder, (LPVOID*)&m_pFg);
-
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	hr = m_pBuilder->SetFiltergraph(m_pFg);
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL CCamera::InitFilters()
-{
-	//////////////////////////////////////////////////////////////////
-	//set up source filter
-	//////////////////////////////////////////////////////////////////
-	//get device information
-	std::vector<TCaptureDevice>	vecCaptureDevice = dscap_enum_device();   
-
-	//find device
-	UINT i;
-	std::wstring cameratype ( L"EXCCD01400KPA" );
-	for (i=0; i<vecCaptureDevice.size(); i++)
-	{
-		if ( 0 == cameratype.compare( vecCaptureDevice[i].FriendlyName.c_str() ) )   
-		{
-			//if we find a device
-			break;
-		}
-	}
-
-	//如果没有找到匹配的device
-	if (i == vecCaptureDevice.size())
-	{
-		return FALSE;
-	}
-
-	std::wstring strDevice = vecCaptureDevice[i].DisplayName;              // Get the device name
-
-	// get moniker 
-	CComPtr<IMoniker> spMoniker;
-	CComPtr<IBindCtx> spBC;
-	HRESULT hr = CreateBindCtx(0, &spBC);
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	DWORD dwEaten;
-	if (FAILED(MkParseDisplayName(spBC, strDevice.c_str(), &dwEaten, &spMoniker)))
-	{
-		return FALSE;
-	}
-
-	
-	hr = spMoniker->BindToObject(0, 0, IID_IBaseFilter, (void**)&m_pSource);
-
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	// Add the video capture filter to the graph with its friendly name
-	hr = m_pFg->AddFilter(m_pSource, L"Source");
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	//////////////////////////////////////////////////////////////////
-	//set up grabber
-	//////////////////////////////////////////////////////////////////
-	CComPtr<IBaseFilter> pSampleGrabber;
-
-	hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&pSampleGrabber);
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	hr = m_pFg->AddFilter(pSampleGrabber, L"SampleGrabber");
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	//setup grabber parameters
-	m_SampleGrabberCBImp.init_sample_image(this,&m_EventCaptured);
-
-	CComPtr<ISampleGrabber> pGrabber;
-	pSampleGrabber->QueryInterface(IID_ISampleGrabber, (void**)&pGrabber);
-	if (pGrabber)
-	{
-		AM_MEDIA_TYPE mt = { 0 };
-		mt.majortype = MEDIATYPE_Video;
-		mt.subtype = MEDIASUBTYPE_RGB24;
-		hr = pGrabber->SetMediaType(&mt);
-		if (FAILED(hr))
-		{
-			return FALSE;
-		}
-		pGrabber->SetOneShot(FALSE);
-		pGrabber->SetBufferSamples(TRUE);
-		pGrabber->SetCallback(&m_SampleGrabberCBImp,1);
-	} 
-
-	//////////////////////////////////////////////////////////////////
-	//set up render
-	//////////////////////////////////////////////////////////////////
-	CComPtr<IBaseFilter> pNull;
-	hr = CoCreateInstance(CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&pNull);
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-	hr = m_pFg->AddFilter(pNull, L"NullRender");
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-
-	//////////////////////////////////////////////////////////////////
-	//connect filters
-	//////////////////////////////////////////////////////////////////
-	hr = m_pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_pSource, pSampleGrabber, pNull);
-	if (FAILED(hr))
-	{
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
-void CCamera::ReleaseFG()
-{
-	if (m_pSource)
-	{
-		m_pSource->Release();
-		m_pSource = NULL;
-	}
-	if (m_pBuilder)
-	{
-		m_pBuilder->Release();
-		m_pBuilder = NULL;
-	}
-
-	if (m_pFg)
-	{
-		m_pFg->Release();
-		m_pFg = NULL;
-	}
-
-	//其他的由CComPtr自动release
-}
-
-void CCamera::StopPreview()
-{
-
-	CComPtr<IMediaControl> spMC;
-	HRESULT hr = m_pFg->QueryInterface(IID_IMediaControl, (void**)&spMC);
-	if (SUCCEEDED(hr))
-	{
-		spMC->Stop();
-	}
-}
-
-PITOUPCAM_WHITEBALANCE_CALLBACK CCamera::fnWBProc( const int aGain[3], void* pCtx )
-{
-	return S_OK;
-}
-
 ULONG CCamera::getFrameNum()
 {
-	return m_SampleGrabberCBImp.getFrameNum();
+	return m_ulFrameNum;
 }
 
 float CCamera::getFPS()
 {
-	return m_SampleGrabberCBImp.getFPS();
+	float fFPS = -1;
+	XI_RETURN res = xiGetParamFloat(m_hCamera,XI_PRM_FRAMERATE,&fFPS);
+	return fFPS;
+}
+
+int CCamera::FindWndIndex( HWND hWnd )
+{
+	for (int i = 0; i < m_OutputWnds.size(); i++)
+	{
+		if (m_OutputWnds[i].hWnd == hWnd)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+UINT CCamera::ReadBuffer( LPVOID pParam )
+{
+	CCamera* pThis = (CCamera*)pParam;
+
+	while (pThis->m_bCapturing)
+	{
+		xiGetImage(pThis->m_hCamera,2000,&(pThis->m_ImageBuffer));
+		memcpy(pThis->GetBufferPtr(), pThis->m_ImageBuffer.bp, CAMERA_IMAGE_WIDTH * CAMERA_IMAGE_HEIGHT * 3);
+		pThis->SwitchBuffer();
+		pThis->m_EventCaptured.SetEvent();
+
+		EnterCriticalSection(&pThis->m_WndsPro);
+		if (pThis->m_OutputWnds.size() > 0)
+		{
+			for(int i = 0; i < pThis->m_OutputWnds.size();i++)
+			{
+				if (pThis->m_OutputWnds[i].bNotify)
+				{
+					PostMessage(pThis->m_OutputWnds[i].hWnd,pThis->m_OutputWnds[i].uiNotifyMsg,0,0);
+				}
+			}
+		}	
+		LeaveCriticalSection(&pThis->m_WndsPro);
+	}
+	return 0;
 }

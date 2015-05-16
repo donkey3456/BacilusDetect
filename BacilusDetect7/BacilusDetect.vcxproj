@@ -35,6 +35,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\..\..\..\libs\VC10_props\OPENCV\OpenCV_DEBUG_32.props" />
+    <Import Project="..\..\..\libs\VC10_props\XIMEA\XIMEA_32.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -156,7 +157,6 @@
     <ClInclude Include="ProSingleImage.h" />
     <ClInclude Include="Report.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SampleGrabberCBImpl.h" />
     <ClInclude Include="ScanFashionDlg.h" />
     <ClInclude Include="SerialPort.h" />
     <ClInclude Include="SlideInfoDlg.h" />
@@ -181,7 +181,6 @@
     <ClCompile Include="ODBCErrors.cpp" />
     <ClCompile Include="ProSingleImage.cpp" />
     <ClCompile Include="Report.cpp" />
-    <ClCompile Include="SampleGrabberCBImpl.cpp" />
     <ClCompile Include="ScanFashionDlg.cpp" />
     <ClCompile Include="SerialPort.cpp" />
     <ClCompile Include="SlideInfoDlg.cpp" />

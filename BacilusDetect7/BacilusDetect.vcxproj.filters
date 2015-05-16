@@ -138,9 +138,6 @@
     <ClInclude Include="AutoFocus.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SampleGrabberCBImpl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BacilusDetect.cpp">
@@ -201,9 +198,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AutoFocus.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SampleGrabberCBImpl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
