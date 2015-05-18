@@ -106,6 +106,7 @@ BOOL CAutoAdjustLight::TuneLight(void)
 	// 自动白平衡初始设置
 	pMotorController->ZMotorSmoothMove2AbsolutePos(m_fAdjustLightPositionZ, DISTANCE_UNIT_UM);
 	Sleep(200);	
+	RECT  auxRect;        // 设置自动白平衡的区域：纯白或灰色区域
 
 	pCamera->AutoWhiteBalance();
 

@@ -19,6 +19,8 @@ CCamera::CCamera(void)
 
 	InitializeCriticalSection(&m_WndsPro);
 
+	m_ulFrameNum = 0;
+
 }
 
 CCamera::~CCamera(void)
@@ -56,6 +58,7 @@ void CCamera::close(void)
 		WaitForSingleObject(m_hThread,INFINITE);
 		m_hCamera = INVALID_HANDLE_VALUE;
 		m_hThread = INVALID_HANDLE_VALUE;
+		m_ulFrameNum = 0;
 	}
 }
 
@@ -328,7 +331,7 @@ UINT CCamera::ReadBuffer( LPVOID pParam )
 		memcpy(pThis->GetBufferPtr(), pThis->m_ImageBuffer.bp, CAMERA_IMAGE_WIDTH * CAMERA_IMAGE_HEIGHT * 3);
 		pThis->SwitchBuffer();
 		pThis->m_EventCaptured.SetEvent();
-
+		pThis->m_ulFrameNum++;
 		EnterCriticalSection(&pThis->m_WndsPro);
 		if (pThis->m_OutputWnds.size() > 0)
 		{
