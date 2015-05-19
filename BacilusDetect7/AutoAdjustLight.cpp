@@ -8,7 +8,7 @@ extern CMechanism		g_Mechanism;
 
 CAutoAdjustLight::CAutoAdjustLight(void)
 	: m_fBestImageGray(181.65)
-	, m_ulInitExpTime(30963)        // us
+	, m_ulInitExpTime(6000)        // us
 	, m_iExpTimeSkew(230) 
 	, m_fAdjustLightPositionZ(40)   // um
 	, m_fInitWBPositionZ(0)         // um

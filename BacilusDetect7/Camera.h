@@ -72,6 +72,7 @@ private:
 	ULONG						m_ulFrameNum;
 	std::vector<OUTPUT_WINDOW_INFO>	m_OutputWnds;
 	CRITICAL_SECTION			m_WndsPro;
+	CRITICAL_SECTION			m_BufferPro;
 	XI_IMG						m_ImageBuffer;
 //内部操作
 private:
@@ -90,7 +91,7 @@ public:
 	// 新方法，连接
 	void		DeleteOutputWnd(HWND hParent);
 	// 获取最新图像
-	cv::Mat		GetImage(){return m_matImage;}
+	cv::Mat		GetImage();
 	//关闭相机
 	void		close(void);
 	// 相机控制函数

@@ -18,7 +18,7 @@ CCamera::CCamera(void)
 	m_matBuffer = 0;
 
 	InitializeCriticalSection(&m_WndsPro);
-
+	InitializeCriticalSection(&m_BufferPro);
 	m_ulFrameNum = 0;
 
 }
@@ -31,6 +31,7 @@ CCamera::~CCamera(void)
 		close();
 	}
 	DeleteCriticalSection(&m_WndsPro);
+	DeleteCriticalSection((&m_BufferPro));
 }
 
 //内部操作
@@ -54,8 +55,9 @@ void CCamera::close(void)
 	if (m_bCapturing)
 	{
 		m_bCapturing = FALSE;
-		xiCloseDevice(m_hCamera);
+
 		WaitForSingleObject(m_hThread,INFINITE);
+		xiCloseDevice(m_hCamera);
 		m_hCamera = INVALID_HANDLE_VALUE;
 		m_hThread = INVALID_HANDLE_VALUE;
 		m_ulFrameNum = 0;
@@ -291,7 +293,9 @@ uchar* CCamera::GetBufferPtr()
 
 void CCamera::SwitchBuffer()
 {
+	EnterCriticalSection(&m_BufferPro);
 	m_matImage = m_matBuffer;	//将原m_matImage release，并使m_matImage变成m_matBuffer
+	LeaveCriticalSection(&m_BufferPro);
 	cv::Mat temp;
 	temp.create(CAMERA_IMAGE_HEIGHT,CAMERA_IMAGE_WIDTH,CV_8UC3);
 	m_matBuffer = temp;
@@ -346,4 +350,12 @@ UINT CCamera::ReadBuffer( LPVOID pParam )
 		LeaveCriticalSection(&pThis->m_WndsPro);
 	}
 	return 0;
+}
+
+cv::Mat CCamera::GetImage()
+{
+	EnterCriticalSection(&m_BufferPro);
+	cv::Mat temp = m_matImage;
+	LeaveCriticalSection(&m_BufferPro);
+	return temp;
 }

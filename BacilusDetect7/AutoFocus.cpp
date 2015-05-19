@@ -66,7 +66,7 @@ bool  lesser_FOVPosition( CAutoFocus::StructFOVCostPeakData elem1, CAutoFocus::S
 
 
 CAutoFocus::CAutoFocus(void)
-	: m_fFPS( 15 )
+	: m_fFPS( 10 )
 	, m_fZRefPosition( 0 )  // um
 	, m_fMaxStep( 5 )   // um
 	, m_fMinStep( 1 )   // um
@@ -93,14 +93,14 @@ CAutoFocus::CAutoFocus(void)
 	cv::Size    ImageSize = pCamera->GetCameraImageSize();
 	
 	m_matBestImage.create(ImageSize, CV_8UC3);
-	m_matRefGrayImg.create(cv::Size(ImageSize.width/2, ImageSize.height/2), CV_8UC1);
+	m_matRefGrayImg.create(cv::Size(ImageSize.width/4, ImageSize.height/4), CV_8UC1);
 	m_matRefGrayImg.setTo(0);;
 	m_matCurDstGrayImg.create(m_matRefGrayImg.size(),CV_8UC1);
 
 	m_iSubImgCol = 5;
 	m_iSubImgRow = 4;
-	m_iSubImgWidth = ImageSize.width/2 / m_iSubImgCol;
-	m_iSubImgHeight = ImageSize.height/2 / m_iSubImgRow;
+	m_iSubImgWidth = ImageSize.width/ 4 / m_iSubImgCol;
+	m_iSubImgHeight = ImageSize.height/ 4 / m_iSubImgRow;
 
 	m_LargeFocusingData.fXYRange = 1000;        // um, 1mm
 	m_LargeFocusingData.fFocusChangeRange = 25; // um
@@ -239,9 +239,7 @@ void  CAutoFocus::RecordSampleData(float fStarPos, float fEndPos, float fStep, S
 	pMotorController->ZMotorSmoothMove2AbsolutePos( fStarPos, DISTANCE_UNIT_UM );
 	
 	// 设置搜索过程中Z轴电机运动速度
-	;
 	pMotorController->SetZMotorSpeed(fStep *  m_fFPS, DISTANCE_UNIT_UM);
-		
 	using namespace std;
 	m_vSampleData.clear();
 	int iDataSize = 2 * ceil( fabs(fEndPos - fStarPos) / fStep );
@@ -256,17 +254,34 @@ void  CAutoFocus::RecordSampleData(float fStarPos, float fEndPos, float fStep, S
 	pMotorController->ZMotorRelativeMove((fEndPos - fStarPos), DISTANCE_UNIT_UM);  	
 	int nIndex;
 	int i, j;
+
+	LARGE_INTEGER l1,l2,lf;
+	QueryPerformanceFrequency(&lf);
+	vector<double> times;
+	double time;
+	QueryPerformanceCounter(&l1);
 	for ( nIndex = 0; nIndex<iDataSize; nIndex++ )
 	{	
-		StructSearchData structSearchData;	
-
-		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);		// 新的图像数据到达
-		// 将采集到的当前原始图像转换为待评估的灰度图像
-		GenerateCurDstGrayImg(); 
 		
+		StructSearchData structSearchData;	
+		::WaitForSingleObject(pCamera->CapturedEvent(),INFINITE);		// 新的图像数据到达
+		QueryPerformanceCounter(&l2);
+		time = double(l2.QuadPart - l1.QuadPart)/lf.QuadPart;
+		times.push_back(time);
+		// 将采集到的当前原始图像转换为待评估的灰度图像
+		QueryPerformanceCounter(&l1);
+		GenerateCurDstGrayImg(); 
+		QueryPerformanceCounter(&l2);
+		time = double(l2.QuadPart - l1.QuadPart)/lf.QuadPart;
+		times.push_back(time);
+		QueryPerformanceCounter(&l1);
 		// 获得Z轴当前的位置, unit: um
 		float fZPos;
 		pMotorController->GetZMotorPosition(fZPos,DISTANCE_UNIT_UM);
+		QueryPerformanceCounter(&l2);
+		time = double(l2.QuadPart - l1.QuadPart)/lf.QuadPart;
+		times.push_back(time);
+		QueryPerformanceCounter(&l1);
 		structSearchData.fSamplePosition = fZPos;
 				
 		// 计算当前灰度图像的清晰度
@@ -313,6 +328,10 @@ void  CAutoFocus::RecordSampleData(float fStarPos, float fEndPos, float fStep, S
 			pMotorController->Stop();
 			break;
 		}
+		QueryPerformanceCounter(&l2);
+		time = double(l2.QuadPart - l1.QuadPart)/lf.QuadPart;
+		times.push_back(time);
+		QueryPerformanceCounter(&l1);
 	}
 	m_vSampleData.shrink_to_fit();
 	//DrawCostCurve(m_vSampleData.begin(),m_vSampleData.end());
